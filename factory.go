@@ -10,52 +10,32 @@ type PeaFactory interface {
 	ContainsPea(name string) (interface{}, error)
 }
 
-type SimplePeaFactory struct {
-	sharedObjects core.SyncMap
+type DefaultPeaFactory struct {
+	SharedPeaRegistry
 }
 
-func NewSimplePeaFactory() SimplePeaFactory {
-	return SimplePeaFactory{
-		sharedObjects: core.NewSyncMap(),
+func NewDefaultPeaFactory() DefaultPeaFactory {
+	return DefaultPeaFactory{
+		SharedPeaRegistry: NewDefaultSharedPeaRegistry(),
 	}
 }
 
-func (factory SimplePeaFactory) GetPea(name string) (interface{}, error) {
-	return factory.getPea(name, nil, nil)
-}
-
-func (factory SimplePeaFactory) GetPeaByNameAndType(name string, typ *core.Type) (interface{}, error) {
-	return factory.getPea(name, typ, nil)
-}
-
-func (factory SimplePeaFactory) GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error) {
-	return factory.getPea(name, nil, args)
-}
-
-func (factory SimplePeaFactory) GetPeaByType(typ *core.Type) (interface{}, error) {
-	return factory.getPea("<nil>", typ, nil)
-}
-
-func (factory SimplePeaFactory) ContainsPea(name string) (interface{}, error) {
-	return factory.getPea(name, nil, nil)
-}
-
-func (factory SimplePeaFactory) getPea(name string, typ *core.Type, args ...interface{}) (interface{}, error) {
-	peaName := name
-	sharedObject := factory.getSharedObject(peaName)
-	if sharedObject != nil && len(args) == 0 {
-		return sharedObject, nil
-	}
-	if typ != nil {
-
-	}
+func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
 	return nil, nil
 }
 
-func (factory SimplePeaFactory) getSharedObject(name string) interface{} {
-	sharedObj := factory.sharedObjects.Get(name)
-	if sharedObj == nil {
+func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ *core.Type) (interface{}, error) {
+	return nil, nil
+}
 
-	}
-	return sharedObj
+func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+func (factory DefaultPeaFactory) GetPeaByType(typ *core.Type) (interface{}, error) {
+	return nil, nil
+}
+
+func (factory DefaultPeaFactory) ContainsPea(name string) (interface{}, error) {
+	return nil, nil
 }
