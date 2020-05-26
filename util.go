@@ -15,7 +15,7 @@ func CreateInstance(typ *core.Type, args []interface{}) interface{} {
 		if len(result) > 1 {
 			panic("It only supports the construction functions with one parameter")
 		}
-		return result[0]
+		return result[0].Interface()
 	} else if core.IsStruct(typ) {
 		if len(args) > 0 {
 			panic("Struct type does not support args")
