@@ -5,9 +5,7 @@ import (
 	"sync"
 )
 
-const defaultSharedObjectsMapSize = 16
-const defaultSharedObjectsInPreparationMapSize = 16
-const defaultSharedObjectsCompletedMapSize = 32
+const defaultSharedObjectsMapSize = 0
 
 type SharedPeaRegistry interface {
 	RegisterSharedPea(peaName string, sharedObject interface{})
@@ -27,8 +25,8 @@ type DefaultSharedPeaRegistry struct {
 func NewDefaultSharedPeaRegistry() DefaultSharedPeaRegistry {
 	return DefaultSharedPeaRegistry{
 		sharedObjects:              make(map[string]interface{}, defaultSharedObjectsMapSize),
-		sharedObjectsInPreparation: make(map[string]interface{}, defaultSharedObjectsInPreparationMapSize),
-		sharedObjectsCompleted:     make(map[string]interface{}, defaultSharedObjectsCompletedMapSize),
+		sharedObjectsInPreparation: make(map[string]interface{}, defaultSharedObjectsMapSize),
+		sharedObjectsCompleted:     make(map[string]interface{}, defaultSharedObjectsMapSize),
 		muSharedObjects:            sync.RWMutex{},
 	}
 }

@@ -12,8 +12,8 @@ func CreateInstance(typ *core.Type, args []interface{}) interface{} {
 			in = append(in, reflect.ValueOf(arg))
 		}
 		result := typ.Val.Call(in)
-		if len(result) > 1 {
-			panic("It only supports the construction functions with one parameter")
+		if len(result) != 1 {
+			panic("It only supports the construction functions with one return parameter")
 		}
 		return result[0].Interface()
 	} else if core.IsStruct(typ) {
