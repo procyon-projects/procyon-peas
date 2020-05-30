@@ -1,6 +1,7 @@
 package peas
 
 import (
+	core "github.com/Rollcomp/procyon-core"
 	"log"
 	"sync"
 )
@@ -56,13 +57,16 @@ func (registry DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{
 }
 
 func (registry DefaultSharedPeaRegistry) ContainsSharedPea(peaName string) bool {
+	if _, ok := registry.sharedObjects[peaName]; ok {
+		return true
+	}
 	return false
 }
 
 func (registry DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
-	return nil
+	return core.GetMapKeys(registry.sharedObjects)
 }
 
 func (registry DefaultSharedPeaRegistry) GetSharedPeaCount() int {
-	return 0
+	return len(registry.sharedObjects)
 }
