@@ -1,7 +1,7 @@
 package peas
 
 import (
-	core "github.com/Rollcomp/procyon-core"
+	core "github.com/procyon-projects/procyon-core"
 	"log"
 	"sync"
 )

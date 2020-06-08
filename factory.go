@@ -3,7 +3,7 @@ package peas
 import (
 	"errors"
 	"fmt"
-	core "github.com/Rollcomp/procyon-core"
+	core "github.com/procyon-projects/procyon-core"
 )
 
 type PeaFactory interface {
@@ -55,6 +55,10 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 		return sharedPea, nil
 	}
 	return nil, nil
+}
+
+func (factory DefaultPeaFactory) getPeaMetadataInfo(name string) {
+
 }
 
 func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args ...interface{}) (interface{}, error) {

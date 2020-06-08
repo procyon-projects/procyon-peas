@@ -1,6 +1,6 @@
 package peas
 
-import core "github.com/Rollcomp/procyon-core"
+import core "github.com/procyon-projects/procyon-core"
 
 type ConfigurablePeaFactory interface {
 	PeaFactory
