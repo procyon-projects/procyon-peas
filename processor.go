@@ -2,7 +2,6 @@ package peas
 
 import (
 	core "github.com/procyon-projects/procyon-core"
-	"log"
 	"sync"
 )
 
@@ -30,7 +29,8 @@ func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) {
 	p.mu.Lock()
 	processorType := core.GetType(processor)
 	if _, ok := p.processors[processorType.String()]; ok {
-		log.Fatal("You have already registered this processor : " + processorType.String())
+		core.Logger.Error("You have already registered this processor : " + processorType.String())
+		return
 	}
 	p.processors[processorType.String()] = processor
 	p.mu.Unlock()

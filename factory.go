@@ -2,7 +2,6 @@ package peas
 
 import (
 	"errors"
-	"fmt"
 	core "github.com/procyon-projects/procyon-core"
 )
 
@@ -65,7 +64,7 @@ func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args 
 	var instance interface{}
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Print("While creating an pea object, an error occurred : "+name+"\n", r)
+			core.Logger.Error("While creating an pea object, an error occurred : "+name+"\n", r)
 		}
 	}()
 	return factory.initializePea(name, instance)
