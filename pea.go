@@ -8,6 +8,7 @@ type ConfigurablePeaFactory interface {
 }
 
 type PeaInitializer interface {
+	AfterProperties()
 	Initialize() error
 }
 
