@@ -34,7 +34,7 @@ func NewDefaultSharedPeaRegistry() DefaultSharedPeaRegistry {
 
 func (registry DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, sharedObject interface{}) {
 	if peaName == "" || sharedObject == nil {
-		core.Logger.Error("Pea name or shared object must not be null or empty")
+		core.Log.Error("Pea name or shared object must not be null or empty")
 		return
 	}
 	registry.muSharedObjects.Lock()

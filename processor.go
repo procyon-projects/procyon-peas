@@ -29,7 +29,7 @@ func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) {
 	p.mu.Lock()
 	processorType := core.GetType(processor)
 	if _, ok := p.processors[processorType.String()]; ok {
-		core.Logger.Error("You have already registered this processor : " + processorType.String())
+		core.Log.Error("You have already registered this processor : " + processorType.String())
 		return
 	}
 	p.processors[processorType.String()] = processor
