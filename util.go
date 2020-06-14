@@ -1,11 +1,12 @@
 package peas
 
 import (
+	"errors"
 	core "github.com/procyon-projects/procyon-core"
 	"reflect"
 )
 
-func CreateInstance(typ *core.Type, args []interface{}) interface{} {
+func CreateInstance(typ *core.Type, args []interface{}) (interface{}, error) {
 	if core.IsFunc(typ) {
 		in := make([]reflect.Value, 0)
 		for _, arg := range args {
@@ -13,17 +14,14 @@ func CreateInstance(typ *core.Type, args []interface{}) interface{} {
 		}
 		result := typ.Val.Call(in)
 		if len(result) != 1 {
-			core.Log.Error("It only supports the construction functions with one return parameter")
-			return nil
+			return nil, errors.New("it only supports the construction functions with one return parameter")
 		}
-		return result[0].Interface()
+		return result[0].Interface(), nil
 	} else if core.IsStruct(typ) {
 		if len(args) > 0 {
-			core.Log.Error("Struct type does not support args")
-			return nil
+			return nil, errors.New("struct type does not support args")
 		}
-		return reflect.New(reflect.TypeOf(typ.Typ))
+		return reflect.New(reflect.TypeOf(typ.Typ)), nil
 	}
-	core.Log.Error("You can only pass Struct or Func types")
-	return nil
+	return nil, errors.New("you can only pass Struct or Func types")
 }

@@ -1,6 +1,7 @@
 package peas
 
 import (
+	"errors"
 	core "github.com/procyon-projects/procyon-core"
 	"sync"
 )
@@ -22,18 +23,18 @@ func NewPeaProcessors() *PeaProcessors {
 	}
 }
 
-func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) {
+func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) error {
 	if processor == nil {
-		return
+		return errors.New("processor cannot be null")
 	}
 	p.mu.Lock()
 	processorType := core.GetType(processor)
 	if _, ok := p.processors[processorType.String()]; ok {
-		core.Log.Error("You have already registered this processor : " + processorType.String())
-		return
+		return errors.New("You have already registered this processor : " + processorType.String())
 	}
 	p.processors[processorType.String()] = processor
 	p.mu.Unlock()
+	return nil
 }
 
 func (p *PeaProcessors) RemoveProcessor(processor PeaProcessor) {

@@ -1,6 +1,7 @@
 package peas
 
 import (
+	"errors"
 	core "github.com/procyon-projects/procyon-core"
 	"log"
 	"sync"
@@ -9,7 +10,7 @@ import (
 const defaultSharedObjectsMapSize = 0
 
 type SharedPeaRegistry interface {
-	RegisterSharedPea(peaName string, sharedObject interface{})
+	RegisterSharedPea(peaName string, sharedObject interface{}) error
 	GetSharedPea(peaName string) interface{}
 	ContainsSharedPea(peaName string) bool
 	GetSharedPeaNames() []string
@@ -32,17 +33,17 @@ func NewDefaultSharedPeaRegistry() DefaultSharedPeaRegistry {
 	}
 }
 
-func (registry DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, sharedObject interface{}) {
+func (registry DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, sharedObject interface{}) error {
 	if peaName == "" || sharedObject == nil {
-		core.Log.Error("Pea name or shared object must not be null or empty")
-		return
+		return errors.New("pea name or shared object must not be null or empty")
 	}
 	registry.muSharedObjects.Lock()
 	if _, ok := registry.sharedObjects[peaName]; ok {
-		panic("Could not register shared object")
+		return errors.New("could not register shared object with same name")
 	}
 	registry.sharedObjects[peaName] = sharedObject
 	registry.muSharedObjects.Unlock()
+	return nil
 }
 
 func (registry DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{} {
