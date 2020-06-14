@@ -2,6 +2,7 @@ package peas
 
 import (
 	"errors"
+	"fmt"
 	core "github.com/procyon-projects/procyon-core"
 )
 
@@ -60,11 +61,11 @@ func (factory DefaultPeaFactory) getPeaMetadataInfo(name string) {
 
 }
 
-func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args ...interface{}) (interface{}, error) {
+func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args ...interface{}) (result interface{}, error error) {
 	var instance interface{}
 	defer func() {
 		if r := recover(); r != nil {
-			core.Log.Error("While creating an pea object, an error occurred : "+name+"\n", r)
+			error = errors.New(fmt.Sprintf("while creating an pea object, an error occurred : %s", name))
 		}
 	}()
 	return factory.initializePea(name, instance)
@@ -132,8 +133,8 @@ func (factory DefaultPeaFactory) applyPeaProcessorsAfterInitialization(name stri
 }
 
 /* Pea Processors */
-func (factory DefaultPeaFactory) AddPeaProcessor(processor PeaProcessor) {
-	factory.peaProcessors.AddPeaProcessor(processor)
+func (factory DefaultPeaFactory) AddPeaProcessor(processor PeaProcessor) error {
+	return factory.peaProcessors.AddPeaProcessor(processor)
 }
 
 func (factory DefaultPeaFactory) GetProcessors() []PeaProcessor {
