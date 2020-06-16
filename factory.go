@@ -144,3 +144,28 @@ func (factory DefaultPeaFactory) GetProcessors() []PeaProcessor {
 func (factory DefaultPeaFactory) GetProcessorsCount() int {
 	return factory.peaProcessors.GetProcessorsCount()
 }
+
+// Pea Definition Registry
+func (factory DefaultPeaFactory) RegisterPeaDefinition(peaName string, definition PeaDefinition) {
+
+}
+
+func (factory DefaultPeaFactory) RemovePeaDefinition(peaName string) {
+
+}
+
+func (factory DefaultPeaFactory) ContainsPeaDefinition(peaName string) bool {
+	return false
+}
+
+func (factory DefaultPeaFactory) GetPeaDefinition(peaName string) PeaDefinition {
+	return nil
+}
+
+func (factory DefaultPeaFactory) GetPeaDefinitionNames() []string {
+	return nil
+}
+
+func (factory DefaultPeaFactory) GetPeaDefinitionCount() int {
+	return 0
+}
