@@ -7,6 +7,6 @@ const (
 	PeaSingletonScope string = "singleton" /* it is only supported now by default */
 )
 
-type PeaScope interface {
-	GetScopeName() string
-}
+//type PeaScope interface {
+//	GetScopeName() string
+//}
