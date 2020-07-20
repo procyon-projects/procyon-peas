@@ -213,7 +213,7 @@ func (factory DefaultPeaFactory) RegisterScope(scopeName string, scope PeaScope)
 	if scope == nil {
 		return errors.New("scope must not be null")
 	}
-	if PeaSharedScope == scopeName || PeaPrototypeScope == scopeName {
+	if SharedScope == scopeName || PrototypeScope == scopeName {
 		return errors.New("existing scopes shared and prototype cannot be replaced")
 	}
 	factory.muScopes.Lock()

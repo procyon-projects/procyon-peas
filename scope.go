@@ -1,8 +1,8 @@
 package peas
 
 const (
-	PeaSharedScope    string = "shared"
-	PeaPrototypeScope string = "prototype"
+	SharedScope    string = "shared"
+	PrototypeScope string = "prototype"
 )
 
 type PeaScope interface {
