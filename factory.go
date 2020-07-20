@@ -16,30 +16,70 @@ type PeaFactory interface {
 
 type DefaultPeaFactory struct {
 	SharedPeaRegistry
-	peaProcessors *PeaProcessors
+	PeaDefinitionRegistry
+	peaProcessors    *PeaProcessors
+	parentPeaFactory PeaFactory
 }
 
-func NewDefaultPeaFactory() DefaultPeaFactory {
+func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 	return DefaultPeaFactory{
-		SharedPeaRegistry: NewDefaultSharedPeaRegistry(),
-		peaProcessors:     NewPeaProcessors(),
+		SharedPeaRegistry:     NewDefaultSharedPeaRegistry(),
+		PeaDefinitionRegistry: NewDefaultPeaDefinitionRegistry(),
+		peaProcessors:         NewPeaProcessors(),
+		parentPeaFactory:      parentPeaFactory,
 	}
 }
 
 func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
-	return factory.getPeaWith(name, nil, nil)
+	val, err := factory.getPeaWith(name, nil, nil)
+	if err != nil {
+		return val, err
+	}
+	if val == nil && factory.parentPeaFactory != nil {
+		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
+			return parentPeaFactory.getPeaWith(name, nil, nil)
+		}
+	}
+	return val, nil
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ *core.Type) (interface{}, error) {
-	return factory.getPeaWith(name, typ, nil)
+	val, err := factory.getPeaWith(name, typ, nil)
+	if err != nil {
+		return val, err
+	}
+	if val == nil && factory.parentPeaFactory != nil {
+		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
+			return parentPeaFactory.getPeaWith(name, typ, nil)
+		}
+	}
+	return val, nil
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error) {
-	return factory.getPeaWith(name, nil, args)
+	val, err := factory.getPeaWith(name, nil, args)
+	if err != nil {
+		return val, err
+	}
+	if val == nil && factory.parentPeaFactory != nil {
+		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
+			return parentPeaFactory.getPeaWith(name, nil, args)
+		}
+	}
+	return val, nil
 }
 
 func (factory DefaultPeaFactory) GetPeaByType(typ *core.Type) (interface{}, error) {
-	return factory.getPeaWith("", typ, nil)
+	val, err := factory.getPeaWith("", typ, nil)
+	if err != nil {
+		return val, err
+	}
+	if val == nil && factory.parentPeaFactory != nil {
+		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
+			return parentPeaFactory.getPeaWith("", typ, nil)
+		}
+	}
+	return val, nil
 }
 
 func (factory DefaultPeaFactory) ContainsPea(name string) (interface{}, error) {
@@ -100,8 +140,8 @@ func (factory DefaultPeaFactory) invokePeaAware(name string, obj interface{}) {
 func (factory DefaultPeaFactory) applyPeaProcessorsBeforeInitialization(name string, obj interface{}) (interface{}, error) {
 	result := obj
 	var err error
-	if factory.GetProcessorsCount() > 0 {
-		for _, processor := range factory.GetProcessors() {
+	if factory.GetPeaProcessorsCount() > 0 {
+		for _, processor := range factory.GetPeaProcessors() {
 			result, err = processor.BeforeInitialization(name, result)
 			if err != nil {
 				return result, err
@@ -121,8 +161,8 @@ func (factory DefaultPeaFactory) invokePeaInitializers(name string, obj interfac
 func (factory DefaultPeaFactory) applyPeaProcessorsAfterInitialization(name string, obj interface{}) (interface{}, error) {
 	result := obj
 	var err error
-	if factory.GetProcessorsCount() > 0 {
-		for _, processor := range factory.GetProcessors() {
+	if factory.GetPeaProcessorsCount() > 0 {
+		for _, processor := range factory.GetPeaProcessors() {
 			result, err = processor.AfterInitialization(name, result)
 			if err != nil {
 				return result, err
@@ -137,35 +177,23 @@ func (factory DefaultPeaFactory) AddPeaProcessor(processor PeaProcessor) error {
 	return factory.peaProcessors.AddPeaProcessor(processor)
 }
 
-func (factory DefaultPeaFactory) GetProcessors() []PeaProcessor {
+func (factory DefaultPeaFactory) GetPeaProcessors() []PeaProcessor {
 	return factory.peaProcessors.GetProcessors()
 }
 
-func (factory DefaultPeaFactory) GetProcessorsCount() int {
+func (factory DefaultPeaFactory) GetPeaProcessorsCount() int {
 	return factory.peaProcessors.GetProcessorsCount()
 }
 
-// Pea Definition Registry
-func (factory DefaultPeaFactory) RegisterPeaDefinition(peaName string, definition PeaDefinition) {
-
-}
-
-func (factory DefaultPeaFactory) RemovePeaDefinition(peaName string) {
-
-}
-
-func (factory DefaultPeaFactory) ContainsPeaDefinition(peaName string) bool {
-	return false
-}
-
-func (factory DefaultPeaFactory) GetPeaDefinition(peaName string) PeaDefinition {
+/* Pea Scope */
+func (factory DefaultPeaFactory) RegisterScope(scopeName string, scope PeaScope) error {
 	return nil
 }
 
-func (factory DefaultPeaFactory) GetPeaDefinitionNames() []string {
+func (factory DefaultPeaFactory) GetRegisteredScopes() []string {
 	return nil
 }
 
-func (factory DefaultPeaFactory) GetPeaDefinitionCount() int {
-	return 0
+func (factory DefaultPeaFactory) GetRegisteredScope(scopeName string) PeaScope {
+	return nil
 }

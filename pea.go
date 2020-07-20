@@ -3,8 +3,14 @@ package peas
 import core "github.com/procyon-projects/procyon-core"
 
 type ConfigurablePeaFactory interface {
-	PeaFactory
 	SharedPeaRegistry
+	PeaFactory
+	AddPeaProcessor(processor PeaProcessor) error
+	GetPeaProcessors() []PeaProcessor
+	GetPeaProcessorsCount() int
+	RegisterScope(scopeName string, scope PeaScope) error
+	GetRegisteredScopes() []string
+	GetRegisteredScope(scopeName string) PeaScope
 }
 
 type PeaInitializer interface {
