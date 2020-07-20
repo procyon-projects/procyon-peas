@@ -24,8 +24,8 @@ type DefaultSharedPeaRegistry struct {
 	muSharedObjects            sync.RWMutex
 }
 
-func NewDefaultSharedPeaRegistry() DefaultSharedPeaRegistry {
-	return DefaultSharedPeaRegistry{
+func NewDefaultSharedPeaRegistry() *DefaultSharedPeaRegistry {
+	return &DefaultSharedPeaRegistry{
 		sharedObjects:              make(map[string]interface{}, defaultSharedObjectsMapSize),
 		sharedObjectsInPreparation: make(map[string]interface{}, defaultSharedObjectsMapSize),
 		sharedObjectsCompleted:     make(map[string]interface{}, defaultSharedObjectsMapSize),
@@ -33,7 +33,7 @@ func NewDefaultSharedPeaRegistry() DefaultSharedPeaRegistry {
 	}
 }
 
-func (registry DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, sharedObject interface{}) error {
+func (registry *DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, sharedObject interface{}) error {
 	if peaName == "" || sharedObject == nil {
 		return errors.New("pea name or shared object must not be null or empty")
 	}
@@ -46,7 +46,7 @@ func (registry DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, share
 	return nil
 }
 
-func (registry DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{} {
+func (registry *DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{} {
 	var result interface{}
 	registry.muSharedObjects.Lock()
 	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
@@ -58,17 +58,17 @@ func (registry DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{
 	return result
 }
 
-func (registry DefaultSharedPeaRegistry) ContainsSharedPea(peaName string) bool {
+func (registry *DefaultSharedPeaRegistry) ContainsSharedPea(peaName string) bool {
 	if _, ok := registry.sharedObjects[peaName]; ok {
 		return true
 	}
 	return false
 }
 
-func (registry DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
+func (registry *DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
 	return core.GetMapKeys(registry.sharedObjects)
 }
 
-func (registry DefaultSharedPeaRegistry) GetSharedPeaCount() int {
+func (registry *DefaultSharedPeaRegistry) GetSharedPeaCount() int {
 	return len(registry.sharedObjects)
 }

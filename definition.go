@@ -51,20 +51,20 @@ type DefaultPeaDefinitionRegistry struct {
 	mu          sync.RWMutex
 }
 
-func NewDefaultPeaDefinitionRegistry() DefaultPeaDefinitionRegistry {
-	return DefaultPeaDefinitionRegistry{
+func NewDefaultPeaDefinitionRegistry() *DefaultPeaDefinitionRegistry {
+	return &DefaultPeaDefinitionRegistry{
 		definitions: make(map[string]PeaDefinition, 0),
 		mu:          sync.RWMutex{},
 	}
 }
 
-func (registry DefaultPeaDefinitionRegistry) RegisterPeaDefinition(peaName string, definition PeaDefinition) {
+func (registry *DefaultPeaDefinitionRegistry) RegisterPeaDefinition(peaName string, definition PeaDefinition) {
 	registry.mu.Lock()
 	registry.definitions[peaName] = definition
 	registry.mu.Unlock()
 }
 
-func (registry DefaultPeaDefinitionRegistry) RemovePeaDefinition(peaName string) {
+func (registry *DefaultPeaDefinitionRegistry) RemovePeaDefinition(peaName string) {
 	registry.mu.Lock()
 	if _, ok := registry.definitions[peaName]; ok {
 		delete(registry.definitions, peaName)
@@ -72,7 +72,7 @@ func (registry DefaultPeaDefinitionRegistry) RemovePeaDefinition(peaName string)
 	registry.mu.Unlock()
 }
 
-func (registry DefaultPeaDefinitionRegistry) ContainsPeaDefinition(peaName string) bool {
+func (registry *DefaultPeaDefinitionRegistry) ContainsPeaDefinition(peaName string) bool {
 	var result bool
 	registry.mu.Lock()
 	_, result = registry.definitions[peaName]
@@ -80,7 +80,7 @@ func (registry DefaultPeaDefinitionRegistry) ContainsPeaDefinition(peaName strin
 	return result
 }
 
-func (registry DefaultPeaDefinitionRegistry) GetPeaDefinition(peaName string) PeaDefinition {
+func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinition(peaName string) PeaDefinition {
 	var def PeaDefinition
 	registry.mu.Lock()
 	if val, ok := registry.definitions[peaName]; ok {
@@ -90,10 +90,10 @@ func (registry DefaultPeaDefinitionRegistry) GetPeaDefinition(peaName string) Pe
 	return def
 }
 
-func (registry DefaultPeaDefinitionRegistry) GetPeaDefinitionNames() []string {
+func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionNames() []string {
 	return core.GetMapKeys(registry.definitions)
 }
 
-func (registry DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
+func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 	return len(registry.definitions)
 }

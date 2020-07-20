@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	core "github.com/procyon-projects/procyon-core"
+	"sync"
 )
 
 type PeaFactory interface {
@@ -19,6 +20,8 @@ type DefaultPeaFactory struct {
 	PeaDefinitionRegistry
 	peaProcessors    *PeaProcessors
 	parentPeaFactory PeaFactory
+	peaScopes        map[string]PeaScope
+	muScopes         *sync.RWMutex
 }
 
 func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
@@ -27,6 +30,23 @@ func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 		PeaDefinitionRegistry: NewDefaultPeaDefinitionRegistry(),
 		peaProcessors:         NewPeaProcessors(),
 		parentPeaFactory:      parentPeaFactory,
+		peaScopes:             make(map[string]PeaScope, 0),
+		muScopes:              &sync.RWMutex{},
+	}
+}
+
+func (factory DefaultPeaFactory) SetParentPeaFactory(parent PeaFactory) {
+	factory.parentPeaFactory = parent
+}
+
+func (factory DefaultPeaFactory) Clone() PeaFactory {
+	return DefaultPeaFactory{
+		SharedPeaRegistry:     factory.SharedPeaRegistry,
+		PeaDefinitionRegistry: factory.PeaDefinitionRegistry,
+		peaProcessors:         factory.peaProcessors,
+		parentPeaFactory:      factory.parentPeaFactory,
+		peaScopes:             factory.peaScopes,
+		muScopes:              factory.muScopes,
 	}
 }
 
@@ -187,13 +207,31 @@ func (factory DefaultPeaFactory) GetPeaProcessorsCount() int {
 
 /* Pea Scope */
 func (factory DefaultPeaFactory) RegisterScope(scopeName string, scope PeaScope) error {
+	if scopeName == "" {
+		return errors.New("scopeName must not be null")
+	}
+	if scope == nil {
+		return errors.New("scope must not be null")
+	}
+	if PeaSharedScope == scopeName || PeaPrototypeScope == scopeName {
+		return errors.New("existing scopes shared and prototype cannot be replaced")
+	}
+	factory.muScopes.Lock()
+	factory.peaScopes[scopeName] = scope
+	factory.muScopes.Unlock()
 	return nil
 }
 
 func (factory DefaultPeaFactory) GetRegisteredScopes() []string {
-	return nil
+	return core.GetMapKeys(factory.peaScopes)
 }
 
 func (factory DefaultPeaFactory) GetRegisteredScope(scopeName string) PeaScope {
-	return nil
+	var scope PeaScope
+	factory.muScopes.Lock()
+	if val, ok := factory.peaScopes[scopeName]; ok {
+		scope = val
+	}
+	factory.muScopes.Unlock()
+	return scope
 }
