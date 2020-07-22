@@ -13,6 +13,7 @@ type PeaFactory interface {
 	GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error)
 	GetPeaByType(typ *core.Type) (interface{}, error)
 	ContainsPea(name string) (interface{}, error)
+	ClonePeaFactory() PeaFactory
 }
 
 type DefaultPeaFactory struct {
@@ -39,7 +40,7 @@ func (factory DefaultPeaFactory) SetParentPeaFactory(parent PeaFactory) {
 	factory.parentPeaFactory = parent
 }
 
-func (factory DefaultPeaFactory) Clone() PeaFactory {
+func (factory DefaultPeaFactory) ClonePeaFactory() PeaFactory {
 	return DefaultPeaFactory{
 		SharedPeaRegistry:     factory.SharedPeaRegistry,
 		PeaDefinitionRegistry: factory.PeaDefinitionRegistry,

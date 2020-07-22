@@ -12,7 +12,6 @@ type ConfigurablePeaFactory interface {
 	GetRegisteredScopes() []string
 	GetRegisteredScope(scopeName string) PeaScope
 	SetParentPeaFactory(parent PeaFactory)
-	Clone() PeaFactory
 }
 
 type PeaInitializer interface {
