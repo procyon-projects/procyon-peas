@@ -9,6 +9,7 @@ type ConfigurablePeaFactory interface {
 	GetPeaProcessors() []PeaProcessor
 	GetPeaProcessorsCount() int
 	RegisterScope(scopeName string, scope PeaScope) error
+	RegisterTypeToScope(typ *core.Type, scope PeaScope) error
 	GetRegisteredScopes() []string
 	GetRegisteredScope(scopeName string) PeaScope
 	SetParentPeaFactory(parent PeaFactory)

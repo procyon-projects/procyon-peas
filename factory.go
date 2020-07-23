@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	core "github.com/procyon-projects/procyon-core"
+	"reflect"
 	"sync"
 )
 
@@ -22,6 +23,7 @@ type DefaultPeaFactory struct {
 	peaProcessors    *PeaProcessors
 	parentPeaFactory PeaFactory
 	peaScopes        map[string]PeaScope
+	peaTypeScopes    map[reflect.Type]PeaScope
 	muScopes         *sync.RWMutex
 }
 
@@ -32,6 +34,7 @@ func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 		peaProcessors:         NewPeaProcessors(),
 		parentPeaFactory:      parentPeaFactory,
 		peaScopes:             make(map[string]PeaScope, 0),
+		peaTypeScopes:         make(map[reflect.Type]PeaScope, 0),
 		muScopes:              &sync.RWMutex{},
 	}
 }
@@ -235,4 +238,21 @@ func (factory DefaultPeaFactory) GetRegisteredScope(scopeName string) PeaScope {
 	}
 	factory.muScopes.Unlock()
 	return scope
+}
+
+func (factory DefaultPeaFactory) RegisterTypeToScope(typ *core.Type, scope PeaScope) error {
+	if typ == nil {
+		return errors.New("type must not be null")
+	}
+	if scope == nil {
+		return errors.New("scope must not be null")
+	}
+	factory.muScopes.Lock()
+	scopeType := typ.Typ
+	if scopeType.Kind() == reflect.Ptr {
+		scopeType = scopeType.Elem()
+	}
+	factory.peaTypeScopes[scopeType] = scope
+	factory.muScopes.Unlock()
+	return nil
 }
