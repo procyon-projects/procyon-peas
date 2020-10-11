@@ -13,6 +13,7 @@ type ConfigurablePeaFactory interface {
 	GetRegisteredScopes() []string
 	GetRegisteredScope(scopeName string) PeaScope
 	SetParentPeaFactory(parent PeaFactory)
+	PreInstantiateSharedPeas()
 }
 
 type PeaInitializer interface {

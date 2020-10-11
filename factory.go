@@ -117,6 +117,11 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 	sharedPea := factory.GetSharedPea(name)
 	if sharedPea != nil && args == nil {
 		return sharedPea, nil
+	} else {
+		peaDefinition := factory.GetPeaDefinition(name)
+		if SharedScope == peaDefinition.GetScope() {
+
+		}
 	}
 	return nil, nil
 }
@@ -255,4 +260,11 @@ func (factory DefaultPeaFactory) RegisterTypeToScope(typ *core.Type, scope PeaSc
 	factory.peaTypeScopes[scopeType] = scope
 	factory.muScopes.Unlock()
 	return nil
+}
+
+func (factory DefaultPeaFactory) PreInstantiateSharedPeas() {
+	peaNames := factory.GetPeaDefinitionNames()
+	for _, peaName := range peaNames {
+		factory.GetPea(peaName)
+	}
 }
