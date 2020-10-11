@@ -46,5 +46,5 @@ func (metadata PeaMetadataInfo) GetDependencies() []string {
 }
 
 type PeaNameGenerator interface {
-	GenerateName(peaDefinition PeaDefinition)
+	GenerateName(peaDefinition PeaDefinition) string
 }
