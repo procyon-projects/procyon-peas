@@ -44,3 +44,7 @@ func (metadata PeaMetadataInfo) GetType() *core.Type {
 func (metadata PeaMetadataInfo) GetDependencies() []string {
 	return core.GetMapKeys(metadata.typ)
 }
+
+type PeaNameGenerator interface {
+	GenerateName(peaDefinition PeaDefinition)
+}
