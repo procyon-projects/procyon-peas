@@ -44,6 +44,7 @@ type PeaDefinitionRegistry interface {
 	GetPeaDefinition(peaName string) PeaDefinition
 	GetPeaDefinitionNames() []string
 	GetPeaDefinitionCount() int
+	GetPeaNamesForType(typ *core.Type) []string
 }
 
 type DefaultPeaDefinitionRegistry struct {
@@ -96,4 +97,17 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionNames() []string {
 
 func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 	return len(registry.definitions)
+}
+
+func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ *core.Type) []string {
+	result := make([]string, 0)
+	for peaName, peaDefinition := range registry.definitions {
+		peaType := peaDefinition.GetPeaType()
+		if (core.IsInterface(typ) && peaType.Typ.Implements(typ.Typ)) ||
+			(core.IsStruct(typ) && (typ.Typ == peaType.Typ)) ||
+			(core.IsStruct(typ) && core.IsEmbeddedStruct(typ, peaType)) {
+			result = append(result, peaName)
+		}
+	}
+	return result
 }
