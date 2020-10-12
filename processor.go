@@ -7,8 +7,8 @@ import (
 )
 
 type PeaProcessor interface {
-	BeforeInitialization(peaName string, pea interface{}) (interface{}, error)
-	AfterInitialization(peaName string, pea interface{}) (interface{}, error)
+	BeforePeaInitialization(peaName string, pea interface{}) (interface{}, error)
+	AfterPeaInitialization(peaName string, pea interface{}) (interface{}, error)
 }
 
 type PeaProcessors struct {
@@ -67,4 +67,12 @@ func (p *PeaProcessors) RemoveAllProcessor() {
 	p.mu.Lock()
 	p.processors = make(map[string]PeaProcessor, 0)
 	p.mu.Unlock()
+}
+
+type PeaDefinitionRegistryProcessor interface {
+	AfterPeaDefinitionRegistryInitialization(registry PeaDefinitionRegistry)
+}
+
+type PeaFactoryProcessor interface {
+	AfterPeaFactoryInitialization(factory ConfigurablePeaFactory)
 }

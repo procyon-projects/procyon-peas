@@ -171,7 +171,7 @@ func (factory DefaultPeaFactory) applyPeaProcessorsBeforeInitialization(name str
 	var err error
 	if factory.GetPeaProcessorsCount() > 0 {
 		for _, processor := range factory.GetPeaProcessors() {
-			result, err = processor.BeforeInitialization(name, result)
+			result, err = processor.BeforePeaInitialization(name, result)
 			if err != nil {
 				return result, err
 			}
@@ -192,7 +192,7 @@ func (factory DefaultPeaFactory) applyPeaProcessorsAfterInitialization(name stri
 	var err error
 	if factory.GetPeaProcessorsCount() > 0 {
 		for _, processor := range factory.GetPeaProcessors() {
-			result, err = processor.AfterInitialization(name, result)
+			result, err = processor.AfterPeaInitialization(name, result)
 			if err != nil {
 				return result, err
 			}
