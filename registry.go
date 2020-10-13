@@ -15,7 +15,7 @@ type SharedPeaRegistry interface {
 	ContainsSharedPea(peaName string) bool
 	GetSharedPeaNames() []string
 	GetSharedPeaCount() int
-	GetSharedPeaWithObjectFactory(peaName string, objFunc GetObjectFunc) (interface{}, error)
+	GetSharedPeaWithObjectFunc(peaName string, objFunc GetObjectFunc) (interface{}, error)
 }
 
 type DefaultSharedPeaRegistry struct {
@@ -74,7 +74,7 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaCount() int {
 	return len(registry.sharedObjects)
 }
 
-func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFactory(peaName string, objFunc GetObjectFunc) (interface{}, error) {
+func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFunc(peaName string, objFunc GetObjectFunc) (interface{}, error) {
 	registry.muSharedObjects.Lock()
 	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
 		registry.muSharedObjects.Unlock()

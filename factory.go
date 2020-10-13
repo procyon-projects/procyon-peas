@@ -120,9 +120,16 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 	} else {
 		peaDefinition := factory.GetPeaDefinition(name)
 		if SharedScope == peaDefinition.GetScope() {
-			factory.GetSharedPeaWithObjectFactory(name, func() (instance interface{}, err error) {
-				return nil, nil
+			instance, err := factory.GetSharedPeaWithObjectFunc(name, func() (instance interface{}, err error) {
+				defer func() {
+					if r := recover(); r != nil {
+						err = NewPeaPreparationError(name, "Creation of pea is failed")
+					}
+				}()
+				instance, err = factory.createPea(name, peaDefinition, nil)
+				return
 			})
+			return instance, err
 		} else if PrototypeScope == peaDefinition.GetScope() {
 
 		}
@@ -130,8 +137,8 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 	return nil, nil
 }
 
-func (factory DefaultPeaFactory) getPeaMetadataInfo(name string) {
-
+func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args ...interface{}) (interface{}, error) {
+	return CreateInstance(definition.GetPeaType(), args)
 }
 
 func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args ...interface{}) (result interface{}, error error) {

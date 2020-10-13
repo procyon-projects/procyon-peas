@@ -6,35 +6,42 @@ import (
 )
 
 type PeaDefinition interface {
-	GetName() string
 	GetPeaType() *core.Type
 	GetScope() string
 }
 
+type SimplePeaDefinitionOption func(definition *SimplePeaDefinition)
+
 type SimplePeaDefinition struct {
-	name  string
 	typ   *core.Type
 	scope string
 }
 
-func NewSimplePeaDefinition(name string, typ *core.Type, scope string) SimplePeaDefinition {
-	return SimplePeaDefinition{
-		name,
-		typ,
-		scope,
+func NewSimplePeaDefinition(typ *core.Type, options ...SimplePeaDefinitionOption) *SimplePeaDefinition {
+	def := &SimplePeaDefinition{
+		typ: typ,
 	}
+	for _, option := range options {
+		option(def)
+	}
+	if def.scope == "" {
+		def.scope = SharedScope
+	}
+	return def
 }
 
-func (def SimplePeaDefinition) GetName() string {
-	return def.name
-}
-
-func (def SimplePeaDefinition) GetPeaType() *core.Type {
+func (def *SimplePeaDefinition) GetPeaType() *core.Type {
 	return def.typ
 }
 
-func (def SimplePeaDefinition) GetScope() string {
+func (def *SimplePeaDefinition) GetScope() string {
 	return def.scope
+}
+
+func WithScope(scope string) SimplePeaDefinitionOption {
+	return func(definition *SimplePeaDefinition) {
+		definition.scope = scope
+	}
 }
 
 type PeaDefinitionRegistry interface {
