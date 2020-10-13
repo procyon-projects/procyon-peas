@@ -85,18 +85,16 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFactory(peaName 
 	} else {
 		registry.addSharedPeaToPreparation(peaName)
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			registry.removedSharedPeaFromPreparation(peaName)
+			registry.muSharedObjects.Unlock()
+		}
+	}()
 	newSharedObj, err := objFunc()
-	if err != nil {
-		registry.muSharedObjects.Unlock()
-		return nil, err
-	}
-	if !registry.isSharedPeaInPreparation(peaName) {
-		return nil, NewPeaPreparationError(peaName, "Pea isn't currently in preparation")
-	} else {
-		registry.removedSharedPeaFromPreparation(peaName)
-	}
+	registry.removedSharedPeaFromPreparation(peaName)
 	registry.muSharedObjects.Unlock()
-	return newSharedObj, nil
+	return newSharedObj, err
 }
 
 func (registry *DefaultSharedPeaRegistry) isSharedPeaInPreparation(peaName string) bool {
