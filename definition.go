@@ -6,6 +6,7 @@ import (
 )
 
 type PeaDefinition interface {
+	GetTypeName() string
 	GetPeaType() *core.Type
 	GetScope() string
 }
@@ -28,6 +29,13 @@ func NewSimplePeaDefinition(typ *core.Type, options ...SimplePeaDefinitionOption
 		def.scope = SharedScope
 	}
 	return def
+}
+
+func (def *SimplePeaDefinition) GetTypeName() string {
+	if def.typ == nil {
+		return ""
+	}
+	return def.typ.String()
 }
 
 func (def *SimplePeaDefinition) GetPeaType() *core.Type {
