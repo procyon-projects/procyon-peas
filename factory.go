@@ -120,6 +120,10 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 	} else {
 		peaDefinition := factory.GetPeaDefinition(name)
 		if SharedScope == peaDefinition.GetScope() {
+			factory.GetSharedPeaWithObjectFactory(name, func() (instance interface{}, err error) {
+				return nil, nil
+			})
+		} else if PrototypeScope == peaDefinition.GetScope() {
 
 		}
 	}

@@ -15,6 +15,7 @@ type SharedPeaRegistry interface {
 	ContainsSharedPea(peaName string) bool
 	GetSharedPeaNames() []string
 	GetSharedPeaCount() int
+	GetSharedPeaWithObjectFactory(peaName string, objFunc GetObjectFunc) (interface{}, error)
 }
 
 type DefaultSharedPeaRegistry struct {
@@ -71,4 +72,44 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPeaCount() int {
 	return len(registry.sharedObjects)
+}
+
+func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFactory(peaName string, objFunc GetObjectFunc) (interface{}, error) {
+	registry.muSharedObjects.Lock()
+	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
+		registry.muSharedObjects.Unlock()
+		return sharedObj, nil
+	}
+	if registry.isSharedPeaInPreparation(peaName) {
+		return nil, NewPeaInPreparationError(peaName)
+	} else {
+		registry.addSharedPeaToPreparation(peaName)
+	}
+	newSharedObj, err := objFunc()
+	if err != nil {
+		registry.muSharedObjects.Unlock()
+		return nil, err
+	}
+	if !registry.isSharedPeaInPreparation(peaName) {
+		return nil, NewPeaPreparationError(peaName, "Pea isn't currently in preparation")
+	} else {
+		registry.removedSharedPeaFromPreparation(peaName)
+	}
+	registry.muSharedObjects.Unlock()
+	return newSharedObj, nil
+}
+
+func (registry *DefaultSharedPeaRegistry) isSharedPeaInPreparation(peaName string) bool {
+	if _, ok := registry.sharedObjectsInPreparation[peaName]; ok {
+		return true
+	}
+	return false
+}
+
+func (registry *DefaultSharedPeaRegistry) addSharedPeaToPreparation(peaName string) {
+	registry.sharedObjectsInPreparation[peaName] = nil
+}
+
+func (registry *DefaultSharedPeaRegistry) removedSharedPeaFromPreparation(peaName string) {
+	delete(registry.sharedObjectsInPreparation, peaName)
 }
