@@ -2,7 +2,7 @@ package peas
 
 import (
 	"errors"
-	core "github.com/procyon-projects/procyon-core"
+	"github.com/codnect/goo"
 	"sync"
 )
 
@@ -28,9 +28,9 @@ func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) error {
 		return errors.New("processor cannot be null")
 	}
 	p.mu.Lock()
-	processorType := core.GetType(processor)
-	if _, ok := p.processors[processorType.String()]; ok {
-		return errors.New("You have already registered this processor : " + processorType.String())
+	processorType := goo.GetType(processor)
+	if _, ok := p.processors[processorType.GetPackageFullName()]; ok {
+		return errors.New("You have already registered this processor : " + processorType.GetPackageFullName())
 	}
 	p.processors[processorType.String()] = processor
 	p.mu.Unlock()
@@ -42,9 +42,9 @@ func (p *PeaProcessors) RemoveProcessor(processor PeaProcessor) {
 		return
 	}
 	p.mu.Lock()
-	processorType := core.GetType(processor)
-	if _, ok := p.processors[processorType.String()]; ok {
-		delete(p.processors, processorType.String())
+	processorType := goo.GetType(processor)
+	if _, ok := p.processors[processorType.GetPackageFullName()]; ok {
+		delete(p.processors, processorType.GetPackageFullName())
 	}
 	p.mu.Unlock()
 }

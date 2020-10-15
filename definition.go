@@ -1,24 +1,25 @@
 package peas
 
 import (
+	"github.com/codnect/goo"
 	core "github.com/procyon-projects/procyon-core"
 	"sync"
 )
 
 type PeaDefinition interface {
 	GetTypeName() string
-	GetPeaType() *core.Type
+	GetPeaType() goo.Type
 	GetScope() string
 }
 
 type SimplePeaDefinitionOption func(definition *SimplePeaDefinition)
 
 type SimplePeaDefinition struct {
-	typ   *core.Type
+	typ   goo.Type
 	scope string
 }
 
-func NewSimplePeaDefinition(typ *core.Type, options ...SimplePeaDefinitionOption) *SimplePeaDefinition {
+func NewSimplePeaDefinition(typ goo.Type, options ...SimplePeaDefinitionOption) *SimplePeaDefinition {
 	def := &SimplePeaDefinition{
 		typ: typ,
 	}
@@ -38,7 +39,7 @@ func (def *SimplePeaDefinition) GetTypeName() string {
 	return def.typ.String()
 }
 
-func (def *SimplePeaDefinition) GetPeaType() *core.Type {
+func (def *SimplePeaDefinition) GetPeaType() goo.Type {
 	return def.typ
 }
 
@@ -59,7 +60,7 @@ type PeaDefinitionRegistry interface {
 	GetPeaDefinition(peaName string) PeaDefinition
 	GetPeaDefinitionNames() []string
 	GetPeaDefinitionCount() int
-	GetPeaNamesForType(typ *core.Type) []string
+	GetPeaNamesForType(typ goo.Type) []string
 }
 
 type DefaultPeaDefinitionRegistry struct {
@@ -114,15 +115,16 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 	return len(registry.definitions)
 }
 
-func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ *core.Type) []string {
+func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) []string {
 	result := make([]string, 0)
-	for peaName, peaDefinition := range registry.definitions {
-		peaType := peaDefinition.GetPeaType()
-		if (core.IsInterface(typ) && peaType.Typ.Implements(typ.Typ)) ||
-			(core.IsStruct(typ) && (typ.Typ == peaType.Typ)) ||
-			(core.IsStruct(typ) && core.IsEmbeddedStruct(typ, peaType)) {
-			result = append(result, peaName)
-		}
+	for _, peaDefinition := range registry.definitions {
+		_ = peaDefinition.GetPeaType()
+		/*
+			if (typ.IsInterface() && peaType.Implements(typ.Typ)) ||
+				(typ.IsStruct() && (typ.GetGoType() == peaType.GetGoType())) ||
+				(typ.IsStruct() && core.IsEmbeddedStruct(typ, peaType)) {
+				result = append(result, peaName)
+			}*/
 	}
 	return result
 }

@@ -1,6 +1,9 @@
 package peas
 
-import core "github.com/procyon-projects/procyon-core"
+import (
+	"github.com/codnect/goo"
+	core "github.com/procyon-projects/procyon-core"
+)
 
 type ConfigurablePeaFactory interface {
 	SharedPeaRegistry
@@ -9,7 +12,7 @@ type ConfigurablePeaFactory interface {
 	GetPeaProcessors() []PeaProcessor
 	GetPeaProcessorsCount() int
 	RegisterScope(scopeName string, scope PeaScope) error
-	RegisterTypeToScope(typ *core.Type, scope PeaScope) error
+	RegisterTypeToScope(typ goo.Type, scope PeaScope) error
 	GetRegisteredScopes() []string
 	GetRegisteredScope(scopeName string) PeaScope
 	SetParentPeaFactory(parent PeaFactory)
@@ -26,18 +29,18 @@ type PeaFactoryAware interface {
 }
 
 type PeaMetadataInfo struct {
-	typ          *core.Type
+	typ          goo.Type
 	dependencies map[string]interface{}
 }
 
-func newPeaMetadataInfo(typ *core.Type, dependencies map[string]interface{}) PeaMetadataInfo {
+func newPeaMetadataInfo(typ goo.Type, dependencies map[string]interface{}) PeaMetadataInfo {
 	return PeaMetadataInfo{
 		typ:          typ,
 		dependencies: dependencies,
 	}
 }
 
-func (metadata PeaMetadataInfo) GetType() *core.Type {
+func (metadata PeaMetadataInfo) GetType() goo.Type {
 	return metadata.typ
 }
 

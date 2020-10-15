@@ -3,6 +3,7 @@ package peas
 import (
 	"errors"
 	"fmt"
+	"github.com/codnect/goo"
 	core "github.com/procyon-projects/procyon-core"
 	"reflect"
 	"sync"
@@ -10,9 +11,9 @@ import (
 
 type PeaFactory interface {
 	GetPea(name string) (interface{}, error)
-	GetPeaByNameAndType(name string, typ *core.Type) (interface{}, error)
+	GetPeaByNameAndType(name string, typ goo.Type) (interface{}, error)
 	GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error)
-	GetPeaByType(typ *core.Type) (interface{}, error)
+	GetPeaByType(typ goo.Type) (interface{}, error)
 	ContainsPea(name string) (interface{}, error)
 	ClonePeaFactory() PeaFactory
 }
@@ -67,7 +68,7 @@ func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
 	return val, nil
 }
 
-func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ *core.Type) (interface{}, error) {
+func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ goo.Type) (interface{}, error) {
 	val, err := factory.getPeaWith(name, typ, nil)
 	if err != nil {
 		return val, err
@@ -93,7 +94,7 @@ func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interf
 	return val, nil
 }
 
-func (factory DefaultPeaFactory) GetPeaByType(typ *core.Type) (interface{}, error) {
+func (factory DefaultPeaFactory) GetPeaByType(typ goo.Type) (interface{}, error) {
 	val, err := factory.getPeaWith("", typ, nil)
 	if err != nil {
 		return val, err
@@ -110,7 +111,7 @@ func (factory DefaultPeaFactory) ContainsPea(name string) (interface{}, error) {
 	return nil, nil
 }
 
-func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ...interface{}) (interface{}, error) {
+func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...interface{}) (interface{}, error) {
 	if name == "" {
 		return nil, errors.New("pea name must not be null")
 	}
@@ -126,7 +127,7 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 						err = NewPeaPreparationError(name, "Creation of pea is failed")
 					}
 				}()
-				instance, err = factory.createPea(name, peaDefinition, nil)
+				instance, err = factory.createPea(name, peaDefinition, args)
 				return
 			})
 			return instance, err
@@ -138,10 +139,14 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ *core.Type, args ..
 }
 
 func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args ...interface{}) (interface{}, error) {
-	return CreateInstance(definition.GetPeaType(), args)
+	instance, err := CreateInstance(definition.GetPeaType(), args)
+	if err == nil && definition.GetScope() == SharedScope {
+		err = factory.RegisterSharedPea(name, instance)
+	}
+	return instance, err
 }
 
-func (factory DefaultPeaFactory) createPeaObj(name string, typ *core.Type, args ...interface{}) (result interface{}, error error) {
+func (factory DefaultPeaFactory) createPeaObj(name string, typ goo.Type, args ...interface{}) (result interface{}, error error) {
 	var instance interface{}
 	defer func() {
 		if r := recover(); r != nil {
@@ -256,7 +261,7 @@ func (factory DefaultPeaFactory) GetRegisteredScope(scopeName string) PeaScope {
 	return scope
 }
 
-func (factory DefaultPeaFactory) RegisterTypeToScope(typ *core.Type, scope PeaScope) error {
+func (factory DefaultPeaFactory) RegisterTypeToScope(typ goo.Type, scope PeaScope) error {
 	if typ == nil {
 		return errors.New("type must not be null")
 	}
@@ -264,11 +269,7 @@ func (factory DefaultPeaFactory) RegisterTypeToScope(typ *core.Type, scope PeaSc
 		return errors.New("scope must not be null")
 	}
 	factory.muScopes.Lock()
-	scopeType := typ.Typ
-	if scopeType.Kind() == reflect.Ptr {
-		scopeType = scopeType.Elem()
-	}
-	factory.peaTypeScopes[scopeType] = scope
+	factory.peaTypeScopes[typ.GetGoType()] = scope
 	factory.muScopes.Unlock()
 	return nil
 }
