@@ -3,21 +3,16 @@ package peas
 import (
 	"errors"
 	"github.com/codnect/goo"
-	"reflect"
 )
 
 func CreateInstance(typ goo.Type, args []interface{}) (interface{}, error) {
 	if typ.IsFunction() {
-		in := make([]reflect.Value, 0)
-		for _, arg := range args {
-			in = append(in, reflect.ValueOf(arg))
-		}
-		/*result := typ.(goo.Function).Call(in)
-		if len(result) != 1 {
+		fun := typ.(goo.Function)
+		if fun.GetFunctionReturnTypeCount() != 1 {
 			return nil, errors.New("it only supports the construction functions with one return parameter")
 		}
-		return result[0].Interface(), nil*/
-		return nil, nil
+		results := fun.Call(args)
+		return results[0], nil
 	} else if typ.IsStruct() {
 		if len(args) > 0 {
 			return nil, errors.New("struct type does not support args")

@@ -118,13 +118,21 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) []string {
 	result := make([]string, 0)
 	for _, peaDefinition := range registry.definitions {
-		_ = peaDefinition.GetPeaType()
-		/*
-			if (typ.IsInterface() && peaType.Implements(typ.Typ)) ||
-				(typ.IsStruct() && (typ.GetGoType() == peaType.GetGoType())) ||
-				(typ.IsStruct() && core.IsEmbeddedStruct(typ, peaType)) {
-				result = append(result, peaName)
-			}*/
+		peaType := peaDefinition.GetPeaType()
+		match := false
+		if typ.IsInterface() && peaType.IsStruct() && peaType.(goo.Struct).Implements(typ.(goo.Interface)) {
+			match = true
+		} else if typ.IsStruct() && peaType.IsStruct() {
+			if typ.GetGoType() == peaType.GetGoType() {
+				match = true
+			} else if typ.(goo.Struct).Embedded(peaType.(goo.Struct)) {
+				match = true
+			}
+			match = true
+		}
+		if match {
+			result = append(result, peaDefinition.GetTypeName())
+		}
 	}
 	return result
 }

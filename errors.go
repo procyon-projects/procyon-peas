@@ -28,7 +28,7 @@ type PeaInPreparationError struct {
 func NewPeaInPreparationError(peaName string) PeaInPreparationError {
 	return PeaInPreparationError{
 		NewPeaPreparationError(peaName,
-			"Pea is currently in preparation, maybe it has got circular dependency cylce",
+			"Pea is currently in preparation, maybe it has got circular dependency cycle",
 		),
 	}
 }
