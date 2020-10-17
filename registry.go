@@ -48,6 +48,9 @@ func (registry *DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, shar
 }
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface{} {
+	defer func() {
+		registry.muSharedObjects.Unlock()
+	}()
 	var result interface{}
 	registry.muSharedObjects.Lock()
 	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
@@ -55,11 +58,14 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface
 	} else if sharedObjInPreparation, ok := registry.sharedObjectsInPreparation[peaName]; ok {
 		log.Print(sharedObjInPreparation)
 	}
-	registry.muSharedObjects.Unlock()
 	return result
 }
 
 func (registry *DefaultSharedPeaRegistry) ContainsSharedPea(peaName string) bool {
+	defer func() {
+		registry.muSharedObjects.Unlock()
+	}()
+	registry.muSharedObjects.Lock()
 	if _, ok := registry.sharedObjects[peaName]; ok {
 		return true
 	}
@@ -67,47 +73,57 @@ func (registry *DefaultSharedPeaRegistry) ContainsSharedPea(peaName string) bool
 }
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
-	return core.GetMapKeys(registry.sharedObjects)
+	defer func() {
+		registry.muSharedObjects.Unlock()
+	}()
+	registry.muSharedObjects.Lock()
+	names := core.GetMapKeys(registry.sharedObjects)
+	return names
 }
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPeaCount() int {
-	return len(registry.sharedObjects)
+	defer func() {
+		registry.muSharedObjects.Unlock()
+	}()
+	registry.muSharedObjects.Lock()
+	objectLength := len(registry.sharedObjects)
+	return objectLength
 }
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFunc(peaName string, objFunc GetObjectFunc) (interface{}, error) {
-	registry.muSharedObjects.Lock()
-	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
-		registry.muSharedObjects.Unlock()
-		return sharedObj, nil
+	sharedPea := registry.GetSharedPea(peaName)
+	if sharedPea != nil {
+		return sharedPea, nil
 	}
-	if registry.isSharedPeaInPreparation(peaName) {
-		return nil, NewPeaInPreparationError(peaName)
-	} else {
-		registry.addSharedPeaToPreparation(peaName)
+	err := registry.addSharedPeaToPreparation(peaName)
+	if err != nil {
+		return nil, err
 	}
 	defer func() {
 		if r := recover(); r != nil {
 			registry.removedSharedPeaFromPreparation(peaName)
-			registry.muSharedObjects.Unlock()
 		}
 	}()
-	newSharedObj, err := objFunc()
+	var newSharedObj interface{}
+	newSharedObj, err = objFunc()
 	registry.removedSharedPeaFromPreparation(peaName)
-	registry.muSharedObjects.Unlock()
 	return newSharedObj, err
 }
 
-func (registry *DefaultSharedPeaRegistry) isSharedPeaInPreparation(peaName string) bool {
+func (registry *DefaultSharedPeaRegistry) addSharedPeaToPreparation(peaName string) error {
+	defer func() {
+		registry.muSharedObjects.Unlock()
+	}()
+	registry.muSharedObjects.Lock()
 	if _, ok := registry.sharedObjectsInPreparation[peaName]; ok {
-		return true
+		return NewPeaInPreparationError(peaName)
 	}
-	return false
-}
-
-func (registry *DefaultSharedPeaRegistry) addSharedPeaToPreparation(peaName string) {
 	registry.sharedObjectsInPreparation[peaName] = nil
+	return nil
 }
 
 func (registry *DefaultSharedPeaRegistry) removedSharedPeaFromPreparation(peaName string) {
+	registry.muSharedObjects.Lock()
 	delete(registry.sharedObjectsInPreparation, peaName)
+	registry.muSharedObjects.Unlock()
 }

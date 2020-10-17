@@ -56,7 +56,7 @@ func (factory DefaultPeaFactory) ClonePeaFactory() PeaFactory {
 }
 
 func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
-	val, err := factory.getPeaWith(name, nil, nil)
+	val, err := factory.getPeaWith(name, nil)
 	if err != nil {
 		return val, err
 	}
@@ -69,7 +69,7 @@ func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ goo.Type) (interface{}, error) {
-	val, err := factory.getPeaWith(name, typ, nil)
+	val, err := factory.getPeaWith(name, typ)
 	if err != nil {
 		return val, err
 	}
@@ -95,13 +95,13 @@ func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interf
 }
 
 func (factory DefaultPeaFactory) GetPeaByType(typ goo.Type) (interface{}, error) {
-	val, err := factory.getPeaWith("", typ, nil)
+	val, err := factory.getPeaWith("", typ)
 	if err != nil {
 		return val, err
 	}
 	if val == nil && factory.parentPeaFactory != nil {
 		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
-			return parentPeaFactory.getPeaWith("", typ, nil)
+			return parentPeaFactory.getPeaWith("", typ)
 		}
 	}
 	return val, nil
@@ -127,7 +127,11 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...i
 						err = NewPeaPreparationError(name, "Creation of pea is failed")
 					}
 				}()
-				instance, err = factory.createPea(name, peaDefinition, args)
+				if args == nil {
+					instance, err = factory.createPea(name, peaDefinition)
+				} else {
+					instance, err = factory.createPea(name, peaDefinition, args)
+				}
 				return
 			})
 			return instance, err

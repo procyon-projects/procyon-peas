@@ -117,7 +117,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 
 func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) []string {
 	result := make([]string, 0)
-	for _, peaDefinition := range registry.definitions {
+	for peaName, peaDefinition := range registry.definitions {
 		peaType := peaDefinition.GetPeaType()
 		if peaType.IsFunction() {
 			fun := peaType.(goo.Function)
@@ -139,7 +139,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) [
 			match = true
 		}
 		if match {
-			result = append(result, peaDefinition.GetTypeName())
+			result = append(result, peaName)
 		}
 	}
 	return result
