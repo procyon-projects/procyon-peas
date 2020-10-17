@@ -119,6 +119,14 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) [
 	result := make([]string, 0)
 	for _, peaDefinition := range registry.definitions {
 		peaType := peaDefinition.GetPeaType()
+		if peaType.IsFunction() {
+			fun := peaType.(goo.Function)
+			if fun.GetFunctionReturnTypeCount() == 1 {
+				peaType = fun.GetFunctionReturnTypes()[0]
+			} else {
+				continue
+			}
+		}
 		match := false
 		if typ.IsInterface() && peaType.IsStruct() && peaType.(goo.Struct).Implements(typ.(goo.Interface)) {
 			match = true
