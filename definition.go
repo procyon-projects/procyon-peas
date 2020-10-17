@@ -125,7 +125,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) [
 		} else if typ.IsStruct() && peaType.IsStruct() {
 			if typ.GetGoType() == peaType.GetGoType() {
 				match = true
-			} else if typ.(goo.Struct).Embedded(peaType.(goo.Struct)) {
+			} else if typ.(goo.Struct).EmbeddedStruct(peaType.(goo.Struct)) {
 				match = true
 			}
 			match = true
