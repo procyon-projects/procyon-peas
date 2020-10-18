@@ -196,7 +196,7 @@ func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []int
 		names := factory.GetPeaNamesForType(parameterType)
 		for _, name := range names {
 			candidate, err := factory.GetPea(name)
-			if err != nil && candidate != nil {
+			if err == nil {
 				candidates = append(candidates, candidate)
 			}
 		}
