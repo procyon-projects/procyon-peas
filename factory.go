@@ -143,21 +143,86 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...i
 }
 
 func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args ...interface{}) (interface{}, error) {
-	instance, err := CreateInstance(definition.GetPeaType(), args)
+	instance, err := factory.createPeaInstance(name, definition.GetPeaType(), args)
 	if err == nil && definition.GetScope() == SharedScope {
 		err = factory.RegisterSharedPea(name, instance)
 	}
 	return instance, err
 }
 
-func (factory DefaultPeaFactory) createPeaObj(name string, typ goo.Type, args ...interface{}) (result interface{}, error error) {
+func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, args ...interface{}) (result interface{}, error error) {
 	var instance interface{}
 	defer func() {
 		if r := recover(); r != nil {
 			error = errors.New(fmt.Sprintf("while creating an pea object, an error occurred : %s", name))
 		}
 	}()
+	if typ.IsFunction() {
+		constructorFunction := typ.(goo.Function)
+		parameterCount := constructorFunction.GetFunctionParameterCount()
+		if parameterCount != 0 && args == nil {
+			parameterTypes := constructorFunction.GetFunctionParameterTypes()
+			resolvedArguments := factory.createArgumentArray(name, parameterTypes)
+			instance, error = CreateInstance(typ, resolvedArguments)
+		}
+	} else {
+		instance, error = CreateInstance(typ, nil)
+	}
+	if error != nil {
+		return
+	}
 	return factory.initializePea(name, instance)
+}
+
+func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes []goo.Type) []interface{} {
+	argumentArray := make([]interface{}, len(parameterTypes))
+	for parameterIndex, parameterType := range parameterTypes {
+		peas := factory.resolveDependency(parameterType)
+		peaObjectCount := len(peas)
+		if peaObjectCount == 0 {
+			argumentArray[parameterIndex] = factory.getDefaultValue(parameterType)
+		} else if peaObjectCount == 1 {
+			argumentArray[parameterIndex] = peas[0]
+		} else {
+			panic("Determining which dependency is used cannot be distinguished : " + name)
+		}
+	}
+	return argumentArray
+}
+
+func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []interface{} {
+	candidates := make([]interface{}, 0)
+	if parameterType.IsStruct() || parameterType.IsInterface() {
+		names := factory.GetPeaNamesForType(parameterType)
+		for _, name := range names {
+			candidate, err := factory.GetPea(name)
+			if err != nil && candidate != nil {
+				candidates = append(candidates, candidate)
+			}
+		}
+	}
+	return candidates
+}
+
+func (factory DefaultPeaFactory) getDefaultValue(parameterType goo.Type) interface{} {
+	if parameterType.IsInterface() || parameterType.IsArray() || parameterType.IsSlice() || parameterType.IsMap() {
+		return nil
+	} else if parameterType.IsStruct() {
+		if parameterType.IsPointer() {
+			return nil
+		} else {
+			return parameterType.(goo.Struct).NewInstance()
+		}
+	} else if parameterType.IsString() {
+		return parameterType.(goo.String).NewInstance()
+	} else if parameterType.IsBoolean() {
+		return parameterType.(goo.Boolean).NewInstance()
+	} else if parameterType.IsNumber() {
+		return parameterType.(goo.Number).NewInstance()
+	} else if parameterType.IsFunction() {
+		return nil
+	}
+	panic("Default value cannot be determined, it is not supported :" + parameterType.GetFullName())
 }
 
 func (factory DefaultPeaFactory) initializePea(name string, obj interface{}) (interface{}, error) {
