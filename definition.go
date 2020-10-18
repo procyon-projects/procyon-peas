@@ -36,6 +36,12 @@ func (def *SimplePeaDefinition) GetTypeName() string {
 	if def.typ == nil {
 		return ""
 	}
+	if def.typ.IsFunction() {
+		fun := def.typ.(goo.Function)
+		if fun.GetFunctionParameterCount() == 1 {
+			return fun.GetFunctionParameterTypes()[0].GetFullName()
+		}
+	}
 	return def.typ.String()
 }
 
