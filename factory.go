@@ -164,6 +164,10 @@ func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, ar
 			parameterTypes := constructorFunction.GetFunctionParameterTypes()
 			resolvedArguments := factory.createArgumentArray(name, parameterTypes)
 			instance, error = CreateInstance(typ, resolvedArguments)
+		} else if (parameterCount == 0 && args == nil) || (args != nil && parameterCount == len(args)) {
+			instance, error = CreateInstance(typ, args)
+		} else {
+			error = errors.New("argument count does not match with the parameter count which constructor function has go")
 		}
 	} else {
 		instance, error = CreateInstance(typ, nil)
