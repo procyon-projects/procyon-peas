@@ -191,6 +191,7 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 }
 
 func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []interface{} {
+	candidateProcessedMap := make(map[interface{}]bool, 0)
 	candidates := make([]interface{}, 0)
 	if parameterType.IsStruct() || parameterType.IsInterface() {
 		names := factory.GetPeaNamesForType(parameterType)
@@ -198,8 +199,16 @@ func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []int
 			candidate, err := factory.GetPea(name)
 			if err == nil {
 				candidates = append(candidates, candidate)
+				candidateProcessedMap[candidate] = true
 			}
 		}
+	}
+	typeCandidates := factory.GetSharedPeasByType(parameterType)
+	for _, typeCandidate := range typeCandidates {
+		if _, ok := candidateProcessedMap[typeCandidate]; ok {
+			continue
+		}
+		candidates = append(candidates, typeCandidate)
 	}
 	return candidates
 }

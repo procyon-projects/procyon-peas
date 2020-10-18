@@ -2,8 +2,8 @@ package peas
 
 import (
 	"errors"
+	"github.com/codnect/goo"
 	core "github.com/procyon-projects/procyon-core"
-	"log"
 	"sync"
 )
 
@@ -15,13 +15,15 @@ type SharedPeaRegistry interface {
 	ContainsSharedPea(peaName string) bool
 	GetSharedPeaNames() []string
 	GetSharedPeaCount() int
+	GetSharedPeaType(requiredType goo.Type) interface{}
+	GetSharedPeasByType(requiredType goo.Type) []interface{}
 	GetSharedPeaWithObjectFunc(peaName string, objFunc GetObjectFunc) (interface{}, error)
 }
 
 type DefaultSharedPeaRegistry struct {
 	sharedObjects              map[string]interface{}
 	sharedObjectsInPreparation map[string]interface{}
-	sharedObjectsCompleted     map[string]interface{}
+	sharedObjectsType          map[string]goo.Type
 	muSharedObjects            sync.RWMutex
 }
 
@@ -29,7 +31,7 @@ func NewDefaultSharedPeaRegistry() *DefaultSharedPeaRegistry {
 	return &DefaultSharedPeaRegistry{
 		sharedObjects:              make(map[string]interface{}, defaultSharedObjectsMapSize),
 		sharedObjectsInPreparation: make(map[string]interface{}, defaultSharedObjectsMapSize),
-		sharedObjectsCompleted:     make(map[string]interface{}, defaultSharedObjectsMapSize),
+		sharedObjectsType:          make(map[string]goo.Type, defaultSharedObjectsMapSize),
 		muSharedObjects:            sync.RWMutex{},
 	}
 }
@@ -38,12 +40,18 @@ func (registry *DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, shar
 	if peaName == "" || sharedObject == nil {
 		return errors.New("pea name or shared object must not be null or empty")
 	}
+	sharedObjectType := goo.GetType(sharedObject)
+	if !sharedObjectType.IsInterface() && !sharedObjectType.IsStruct() {
+		return errors.New("pea object must be only instance of struct")
+	}
 	registry.muSharedObjects.Lock()
 	if _, ok := registry.sharedObjects[peaName]; ok {
+		registry.muSharedObjects.Unlock()
 		return errors.New("could not register shared object with same name")
 	}
 	registry.sharedObjects[peaName] = sharedObject
 	registry.muSharedObjects.Unlock()
+	registry.addInstanceSharedObjectsType(peaName, sharedObjectType)
 	return nil
 }
 
@@ -55,8 +63,6 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPea(peaName string) interface
 	registry.muSharedObjects.Lock()
 	if sharedObj, ok := registry.sharedObjects[peaName]; ok {
 		result = sharedObj
-	} else if sharedObjInPreparation, ok := registry.sharedObjectsInPreparation[peaName]; ok {
-		log.Print(sharedObjInPreparation)
 	}
 	return result
 }
@@ -88,6 +94,44 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaCount() int {
 	registry.muSharedObjects.Lock()
 	objectLength := len(registry.sharedObjects)
 	return objectLength
+}
+
+func (registry *DefaultSharedPeaRegistry) GetSharedPeaType(requiredType goo.Type) interface{} {
+	instances := registry.GetSharedPeasByType(requiredType)
+	if len(instances) > 1 {
+		panic("Instances of required type cannot be distinguished")
+	} else if len(instances) == 0 {
+		return nil
+	}
+	return instances[0]
+}
+
+func (registry *DefaultSharedPeaRegistry) GetSharedPeasByType(requiredType goo.Type) []interface{} {
+	if requiredType == nil {
+		panic("Required type must not be nil")
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			registry.muSharedObjects.Unlock()
+		}
+	}()
+	instances := make([]interface{}, 0)
+	registry.muSharedObjects.Lock()
+	for peaName, peaType := range registry.sharedObjectsType {
+		match := false
+		if peaType.Equals(requiredType) || peaType.GetGoType().ConvertibleTo(requiredType.GetGoType()) {
+			match = true
+		} else if requiredType.IsInterface() && peaType.(goo.Struct).Implements(requiredType.(goo.Interface)) {
+			match = true
+		} else if requiredType.IsStruct() && peaType.(goo.Struct).EmbeddedStruct(requiredType.(goo.Struct)) {
+			match = true
+		}
+		if match {
+			instances = append(instances, registry.sharedObjects[peaName])
+		}
+	}
+	registry.muSharedObjects.Unlock()
+	return instances
 }
 
 func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFunc(peaName string, objFunc GetObjectFunc) (interface{}, error) {
@@ -125,5 +169,11 @@ func (registry *DefaultSharedPeaRegistry) addSharedPeaToPreparation(peaName stri
 func (registry *DefaultSharedPeaRegistry) removedSharedPeaFromPreparation(peaName string) {
 	registry.muSharedObjects.Lock()
 	delete(registry.sharedObjectsInPreparation, peaName)
+	registry.muSharedObjects.Unlock()
+}
+
+func (registry *DefaultSharedPeaRegistry) addInstanceSharedObjectsType(peaName string, typ goo.Type) {
+	registry.muSharedObjects.Lock()
+	registry.sharedObjectsType[peaName] = typ
 	registry.muSharedObjects.Unlock()
 }
