@@ -127,11 +127,7 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...i
 						err = NewPeaPreparationError(name, "Creation of pea is failed")
 					}
 				}()
-				if args == nil {
-					instance, err = factory.createPea(name, peaDefinition)
-				} else {
-					instance, err = factory.createPea(name, peaDefinition, args)
-				}
+				instance, err = factory.createPea(name, peaDefinition, args)
 				return
 			})
 			return instance, err
@@ -142,7 +138,7 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...i
 	return nil, nil
 }
 
-func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args ...interface{}) (interface{}, error) {
+func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args []interface{}) (interface{}, error) {
 	instance, err := factory.createPeaInstance(name, definition.GetPeaType(), args)
 	if err == nil && definition.GetScope() == SharedScope {
 		err = factory.RegisterSharedPea(name, instance)
@@ -150,7 +146,7 @@ func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition
 	return instance, err
 }
 
-func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, args ...interface{}) (result interface{}, error error) {
+func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, args []interface{}) (result interface{}, error error) {
 	var instance interface{}
 	defer func() {
 		if r := recover(); r != nil {
