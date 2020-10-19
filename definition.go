@@ -37,7 +37,7 @@ func (def *SimplePeaDefinition) GetTypeName() string {
 		return ""
 	}
 	if def.typ.IsFunction() {
-		fun := def.typ.(goo.Function)
+		fun := def.typ.ToFunctionType()
 		if fun.GetFunctionReturnTypeCount() == 1 {
 			return fun.GetFunctionReturnTypes()[0].GetFullName()
 		}
@@ -126,7 +126,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) [
 	for peaName, peaDefinition := range registry.definitions {
 		peaType := peaDefinition.GetPeaType()
 		if peaType.IsFunction() {
-			fun := peaType.(goo.Function)
+			fun := peaType.ToFunctionType()
 			if fun.GetFunctionReturnTypeCount() == 1 {
 				peaType = fun.GetFunctionReturnTypes()[0]
 			} else {
@@ -134,12 +134,12 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) [
 			}
 		}
 		match := false
-		if typ.IsInterface() && peaType.IsStruct() && peaType.(goo.Struct).Implements(typ.(goo.Interface)) {
+		if typ.IsInterface() && peaType.IsStruct() && peaType.ToStructType().Implements(typ.ToInterfaceType()) {
 			match = true
 		} else if typ.IsStruct() && peaType.IsStruct() {
 			if typ.GetGoType() == peaType.GetGoType() {
 				match = true
-			} else if typ.(goo.Struct).EmbeddedStruct(peaType.(goo.Struct)) {
+			} else if typ.ToStructType().EmbeddedStruct(peaType.ToStructType()) {
 				match = true
 			}
 		}

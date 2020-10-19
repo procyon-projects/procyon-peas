@@ -7,7 +7,7 @@ import (
 
 func CreateInstance(typ goo.Type, args []interface{}) (interface{}, error) {
 	if typ.IsFunction() {
-		fun := typ.(goo.Function)
+		fun := typ.ToFunctionType()
 		if fun.GetFunctionReturnTypeCount() != 1 {
 			return nil, errors.New("it only supports the construction functions with one return parameter")
 		}
@@ -17,7 +17,7 @@ func CreateInstance(typ goo.Type, args []interface{}) (interface{}, error) {
 		if len(args) > 0 {
 			return nil, errors.New("struct type does not support args")
 		}
-		return typ.(goo.Struct).NewInstance(), nil
+		return typ.ToStructType().NewInstance(), nil
 	}
 	return nil, errors.New("you can only pass Struct or Func types")
 }

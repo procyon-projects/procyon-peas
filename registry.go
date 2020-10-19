@@ -121,9 +121,9 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeasByType(requiredType goo.T
 		match := false
 		if peaType.Equals(requiredType) || peaType.GetGoType().ConvertibleTo(requiredType.GetGoType()) {
 			match = true
-		} else if requiredType.IsInterface() && peaType.(goo.Struct).Implements(requiredType.(goo.Interface)) {
+		} else if requiredType.IsInterface() && peaType.ToStructType().Implements(requiredType.ToInterfaceType()) {
 			match = true
-		} else if requiredType.IsStruct() && peaType.(goo.Struct).EmbeddedStruct(requiredType.(goo.Struct)) {
+		} else if requiredType.IsStruct() && peaType.ToStructType().EmbeddedStruct(requiredType.ToStructType()) {
 			match = true
 		}
 		if match {

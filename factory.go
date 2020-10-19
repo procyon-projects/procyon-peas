@@ -154,7 +154,7 @@ func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, ar
 		}
 	}()
 	if typ.IsFunction() {
-		constructorFunction := typ.(goo.Function)
+		constructorFunction := typ.ToFunctionType()
 		parameterCount := constructorFunction.GetFunctionParameterCount()
 		if parameterCount != 0 && args == nil {
 			parameterTypes := constructorFunction.GetFunctionParameterTypes()
@@ -220,14 +220,14 @@ func (factory DefaultPeaFactory) getDefaultValue(parameterType goo.Type) interfa
 		if parameterType.IsPointer() {
 			return nil
 		} else {
-			return parameterType.(goo.Struct).NewInstance()
+			return parameterType.ToStructType().NewInstance()
 		}
 	} else if parameterType.IsString() {
-		return parameterType.(goo.String).NewInstance()
+		return parameterType.ToStringType().NewInstance()
 	} else if parameterType.IsBoolean() {
-		return parameterType.(goo.Boolean).NewInstance()
+		return parameterType.ToBooleanType().NewInstance()
 	} else if parameterType.IsNumber() {
-		return parameterType.(goo.Number).NewInstance()
+		return parameterType.ToNumberType().NewInstance()
 	} else if parameterType.IsFunction() {
 		return nil
 	}
