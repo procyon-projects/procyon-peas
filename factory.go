@@ -182,7 +182,14 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 		if peaObjectCount == 0 {
 			argumentArray[parameterIndex] = factory.getDefaultValue(parameterType)
 		} else if peaObjectCount == 1 {
-			argumentArray[parameterIndex] = peas[0]
+			instance := peas[0]
+			if instance != nil {
+				argType := goo.GetType(instance)
+				if argType != nil && argType.IsPointer() && !parameterType.IsPointer() && parameterType.IsStruct() {
+					instance = reflect.ValueOf(instance).Elem().Interface()
+				}
+			}
+			argumentArray[parameterIndex] = instance
 		} else {
 			panic("Determining which dependency is used cannot be distinguished : " + name)
 		}
