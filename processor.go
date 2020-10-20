@@ -29,8 +29,8 @@ func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) error {
 	}
 	p.mu.Lock()
 	processorType := goo.GetType(processor)
-	if _, ok := p.processors[processorType.GetPackageFullName()]; ok {
-		return errors.New("You have already registered this processor : " + processorType.GetPackageFullName())
+	if _, ok := p.processors[processorType.GetFullName()]; ok {
+		return errors.New("You have already registered this processor : " + processorType.GetFullName())
 	}
 	p.processors[processorType.String()] = processor
 	p.mu.Unlock()
@@ -43,8 +43,8 @@ func (p *PeaProcessors) RemoveProcessor(processor PeaProcessor) {
 	}
 	p.mu.Lock()
 	processorType := goo.GetType(processor)
-	if _, ok := p.processors[processorType.GetPackageFullName()]; ok {
-		delete(p.processors, processorType.GetPackageFullName())
+	if _, ok := p.processors[processorType.GetFullName()]; ok {
+		delete(p.processors, processorType.GetFullName())
 	}
 	p.mu.Unlock()
 }
