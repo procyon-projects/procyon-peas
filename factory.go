@@ -25,6 +25,7 @@ type DefaultPeaFactory struct {
 	parentPeaFactory PeaFactory
 	peaScopes        map[string]PeaScope
 	peaTypeScopes    map[reflect.Type]PeaScope
+	readableTypes    map[string]goo.Type
 	muScopes         *sync.RWMutex
 }
 
@@ -36,6 +37,7 @@ func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 		parentPeaFactory:      parentPeaFactory,
 		peaScopes:             make(map[string]PeaScope, 0),
 		peaTypeScopes:         make(map[reflect.Type]PeaScope, 0),
+		readableTypes:         make(map[string]goo.Type, 0),
 		muScopes:              &sync.RWMutex{},
 	}
 }
@@ -184,8 +186,10 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 		} else if peaObjectCount == 1 {
 			instance := peas[0]
 			if instance != nil {
-				argType := goo.GetType(instance)
-				if argType != nil && argType.IsPointer() && !parameterType.IsPointer() && parameterType.IsStruct() {
+				instanceType := goo.GetType(instance)
+				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
+					argumentArray[parameterIndex] = factory.getDefaultValue(parameterType)
+				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() && parameterType.IsStruct() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
@@ -283,7 +287,7 @@ func (factory DefaultPeaFactory) applyPeaProcessorsBeforeInitialization(name str
 
 func (factory DefaultPeaFactory) invokePeaInitializers(name string, obj interface{}) error {
 	if initializer, ok := obj.(PeaInitializer); ok {
-		return initializer.Initialize()
+		return initializer.InitializePea()
 	}
 	return nil
 }
@@ -300,6 +304,36 @@ func (factory DefaultPeaFactory) applyPeaProcessorsAfterInitialization(name stri
 		}
 	}
 	return result, nil
+}
+
+func (factory DefaultPeaFactory) RegisterTypeAsOnlyReadable(typ goo.Type) error {
+	if typ == nil {
+		return errors.New("type must not be null")
+	}
+	factory.muScopes.Lock()
+	factory.readableTypes[typ.GetFullName()] = typ
+	factory.muScopes.Unlock()
+	return nil
+}
+
+func (factory DefaultPeaFactory) isOnlyReadableType(typ goo.Type) bool {
+	if typ == nil {
+		return false
+	}
+	defer func() {
+		factory.muScopes.Unlock()
+	}()
+	factory.muScopes.Lock()
+	for _, readableType := range factory.readableTypes {
+		if readableType.IsInterface() && typ.IsStruct() && typ.ToStructType().Implements(readableType.ToInterfaceType()) {
+			return true
+		} else if readableType.IsStruct() && typ.IsStruct() {
+			if readableType.GetGoType() == typ.GetGoType() {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 /* Pea Processors */
