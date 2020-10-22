@@ -188,7 +188,7 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 			if instance != nil {
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
-					argumentArray[parameterIndex] = factory.getDefaultValue(parameterType)
+					instance = reflect.ValueOf(instance).Elem().Interface()
 				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() && parameterType.IsStruct() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
