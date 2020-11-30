@@ -1,11 +1,8 @@
 package peas
 
-const (
-	SharedScope    string = "shared"
-	PrototypeScope string = "prototype"
-)
+type PeaScope string
 
-type PeaScope interface {
-	GetPeaObject(peaName string) interface{}
-	RemovePeaObject(peaName string) interface{}
-}
+const (
+	SharedScope    PeaScope = "shared"
+	PrototypeScope PeaScope = "prototype"
+)

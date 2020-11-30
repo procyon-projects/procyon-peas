@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/codnect/goo"
-	core "github.com/procyon-projects/procyon-core"
 	"reflect"
 	"sync"
 )
@@ -15,7 +14,6 @@ type PeaFactory interface {
 	GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error)
 	GetPeaByType(typ goo.Type) (interface{}, error)
 	ContainsPea(name string) (interface{}, error)
-	ClonePeaFactory() PeaFactory
 }
 
 type DefaultPeaFactory struct {
@@ -23,8 +21,6 @@ type DefaultPeaFactory struct {
 	PeaDefinitionRegistry
 	peaProcessors    *PeaProcessors
 	parentPeaFactory PeaFactory
-	peaScopes        map[string]PeaScope
-	peaTypeScopes    map[reflect.Type]PeaScope
 	readableTypes    map[string]goo.Type
 	muScopes         *sync.RWMutex
 }
@@ -35,8 +31,6 @@ func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 		PeaDefinitionRegistry: NewDefaultPeaDefinitionRegistry(),
 		peaProcessors:         NewPeaProcessors(),
 		parentPeaFactory:      parentPeaFactory,
-		peaScopes:             make(map[string]PeaScope, 0),
-		peaTypeScopes:         make(map[reflect.Type]PeaScope, 0),
 		readableTypes:         make(map[string]goo.Type, 0),
 		muScopes:              &sync.RWMutex{},
 	}
@@ -44,17 +38,6 @@ func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
 
 func (factory DefaultPeaFactory) SetParentPeaFactory(parent PeaFactory) {
 	factory.parentPeaFactory = parent
-}
-
-func (factory DefaultPeaFactory) ClonePeaFactory() PeaFactory {
-	return DefaultPeaFactory{
-		SharedPeaRegistry:     factory.SharedPeaRegistry,
-		PeaDefinitionRegistry: factory.PeaDefinitionRegistry,
-		peaProcessors:         factory.peaProcessors,
-		parentPeaFactory:      factory.parentPeaFactory,
-		peaScopes:             factory.peaScopes,
-		muScopes:              factory.muScopes,
-	}
 }
 
 func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
@@ -134,10 +117,11 @@ func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...i
 			})
 			return instance, err
 		} else if PrototypeScope == peaDefinition.GetScope() {
-
+			instance, err := factory.createPeaInstance(name, peaDefinition.GetPeaType(), args)
+			return instance, err
 		}
 	}
-	return nil, nil
+	return nil, errors.New("instance couldn't be created")
 }
 
 func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args []interface{}) (interface{}, error) {
@@ -246,8 +230,6 @@ func (factory DefaultPeaFactory) getDefaultValue(parameterType goo.Type) interfa
 }
 
 func (factory DefaultPeaFactory) initializePea(name string, obj interface{}) (interface{}, error) {
-	/* first of all, invoke pea aware methods */
-	factory.invokePeaAware(name, obj)
 	result := obj
 	var err error
 	result, err = factory.applyPeaProcessorsBeforeInitialization(name, result)
@@ -263,12 +245,6 @@ func (factory DefaultPeaFactory) initializePea(name string, obj interface{}) (in
 		return result, err
 	}
 	return result, nil
-}
-
-func (factory DefaultPeaFactory) invokePeaAware(name string, obj interface{}) {
-	if aware, ok := obj.(PeaFactoryAware); ok {
-		aware.SetPeaFactory(factory)
-	}
 }
 
 func (factory DefaultPeaFactory) applyPeaProcessorsBeforeInitialization(name string, obj interface{}) (interface{}, error) {
@@ -347,50 +323,6 @@ func (factory DefaultPeaFactory) GetPeaProcessors() []PeaProcessor {
 
 func (factory DefaultPeaFactory) GetPeaProcessorsCount() int {
 	return factory.peaProcessors.GetProcessorsCount()
-}
-
-/* Pea Scope */
-func (factory DefaultPeaFactory) RegisterScope(scopeName string, scope PeaScope) error {
-	if scopeName == "" {
-		return errors.New("scopeName must not be null")
-	}
-	if scope == nil {
-		return errors.New("scope must not be null")
-	}
-	if SharedScope == scopeName || PrototypeScope == scopeName {
-		return errors.New("existing scopes shared and prototype cannot be replaced")
-	}
-	factory.muScopes.Lock()
-	factory.peaScopes[scopeName] = scope
-	factory.muScopes.Unlock()
-	return nil
-}
-
-func (factory DefaultPeaFactory) GetRegisteredScopes() []string {
-	return core.GetMapKeys(factory.peaScopes)
-}
-
-func (factory DefaultPeaFactory) GetRegisteredScope(scopeName string) PeaScope {
-	var scope PeaScope
-	factory.muScopes.Lock()
-	if val, ok := factory.peaScopes[scopeName]; ok {
-		scope = val
-	}
-	factory.muScopes.Unlock()
-	return scope
-}
-
-func (factory DefaultPeaFactory) RegisterTypeToScope(typ goo.Type, scope PeaScope) error {
-	if typ == nil {
-		return errors.New("type must not be null")
-	}
-	if scope == nil {
-		return errors.New("scope must not be null")
-	}
-	factory.muScopes.Lock()
-	factory.peaTypeScopes[typ.GetGoType()] = scope
-	factory.muScopes.Unlock()
-	return nil
 }
 
 func (factory DefaultPeaFactory) PreInstantiateSharedPeas() {

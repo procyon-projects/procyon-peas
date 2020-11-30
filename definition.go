@@ -9,14 +9,14 @@ import (
 type PeaDefinition interface {
 	GetTypeName() string
 	GetPeaType() goo.Type
-	GetScope() string
+	GetScope() PeaScope
 }
 
 type SimplePeaDefinitionOption func(definition *SimplePeaDefinition)
 
 type SimplePeaDefinition struct {
 	typ   goo.Type
-	scope string
+	scope PeaScope
 }
 
 func NewSimplePeaDefinition(typ goo.Type, options ...SimplePeaDefinitionOption) *SimplePeaDefinition {
@@ -49,11 +49,11 @@ func (def *SimplePeaDefinition) GetPeaType() goo.Type {
 	return def.typ
 }
 
-func (def *SimplePeaDefinition) GetScope() string {
+func (def *SimplePeaDefinition) GetScope() PeaScope {
 	return def.scope
 }
 
-func WithScope(scope string) SimplePeaDefinitionOption {
+func WithScope(scope PeaScope) SimplePeaDefinitionOption {
 	return func(definition *SimplePeaDefinition) {
 		definition.scope = scope
 	}
