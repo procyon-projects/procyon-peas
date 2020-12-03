@@ -3,7 +3,6 @@ package peas
 import (
 	"errors"
 	"github.com/codnect/goo"
-	core "github.com/procyon-projects/procyon-core"
 	"sync"
 )
 
@@ -83,7 +82,7 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaNames() []string {
 		registry.muSharedObjects.Unlock()
 	}()
 	registry.muSharedObjects.Lock()
-	names := core.GetMapKeys(registry.sharedObjects)
+	names := getStringMapKeys(registry.sharedObjects)
 	return names
 }
 

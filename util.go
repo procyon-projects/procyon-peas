@@ -21,3 +21,12 @@ func CreateInstance(typ goo.Type, args []interface{}) (interface{}, error) {
 	}
 	return nil, errors.New("you can only pass Struct or Func types")
 }
+
+func getStringMapKeys(mapObj interface{}) []string {
+	argMapKeys := goo.GetType(mapObj).GetGoValue().MapKeys()
+	mapKeys := make([]string, len(argMapKeys))
+	for i := 0; i < len(argMapKeys); i++ {
+		mapKeys[i] = argMapKeys[i].String()
+	}
+	return mapKeys
+}

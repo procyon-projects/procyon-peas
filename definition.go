@@ -2,7 +2,6 @@ package peas
 
 import (
 	"github.com/codnect/goo"
-	core "github.com/procyon-projects/procyon-core"
 	"sync"
 )
 
@@ -114,7 +113,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinition(peaName string) P
 }
 
 func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionNames() []string {
-	return core.GetMapKeys(registry.definitions)
+	return getStringMapKeys(registry.definitions)
 }
 
 func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
