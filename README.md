@@ -2,7 +2,10 @@
 <img src="https://procyon-projects.github.io/img/logo.png" width="128">
 
 # Procyon Peas
+[![codecov](https://codecov.io/gh/procyon-projects/procyon-peas/branch/master/graph/badge.svg?token=YQYFX375ET)](https://codecov.io/gh/procyon-projects/procyon-peas)
 [![Build Status](https://travis-ci.com/procyon-projects/procyon-peas.svg?branch=master)](https://travis-ci.com/procyon-projects/procyon-peas)
+[![Gitter](https://badges.gitter.im/procyon-projects/community.svg)](https://gitter.im/procyon-projects/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![PkgGoDev](https://pkg.go.dev/badge/procyon-projects/procyon)](https://pkg.go.dev/github.com/procyon-projects/procyon-peas)
 
 This gives you a basic understanding of Procyon Peas Module. It covers
 components provided by the framework, such as Pea Processors and Initializers.
