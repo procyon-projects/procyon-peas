@@ -6,6 +6,19 @@ import (
 	"testing"
 )
 
+func TestSimplePeaDefinition(t *testing.T) {
+	peaType := goo.GetType(testStruct{})
+	peaDefinition1 := NewSimplePeaDefinition(peaType)
+	assert.Equal(t, SharedScope, peaDefinition1.GetScope())
+	assert.Equal(t, peaType, peaDefinition1.GetPeaType())
+	assert.Equal(t, "testStruct", peaDefinition1.GetTypeName())
+
+	peaDefinition2 := NewSimplePeaDefinition(peaType, WithScope(PrototypeScope))
+	assert.Equal(t, PrototypeScope, peaDefinition2.GetScope())
+	assert.Equal(t, peaType, peaDefinition2.GetPeaType())
+	assert.Equal(t, "testStruct", peaDefinition2.GetTypeName())
+}
+
 func TestDefaultPeaDefinitionRegistry_RegisterPeaDefinition(t *testing.T) {
 	peaDefinitionRegistry := NewDefaultPeaDefinitionRegistry()
 
