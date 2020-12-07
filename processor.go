@@ -32,7 +32,7 @@ func (p *PeaProcessors) AddPeaProcessor(processor PeaProcessor) error {
 	if _, ok := p.processors[processorType.GetFullName()]; ok {
 		return errors.New("You have already registered this processor : " + processorType.GetFullName())
 	}
-	p.processors[processorType.String()] = processor
+	p.processors[processorType.GetFullName()] = processor
 	p.mu.Unlock()
 	return nil
 }
