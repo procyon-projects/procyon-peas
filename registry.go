@@ -149,6 +149,10 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFunc(peaName str
 	}()
 	var newSharedObj interface{}
 	newSharedObj, err = objFunc()
+	err = registry.RegisterSharedPea(peaName, newSharedObj)
+	if err != nil {
+		return nil, err
+	}
 	registry.removedSharedPeaFromPreparation(peaName)
 	return newSharedObj, err
 }

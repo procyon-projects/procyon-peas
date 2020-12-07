@@ -23,7 +23,18 @@ func CreateInstance(typ goo.Type, args []interface{}) (interface{}, error) {
 }
 
 func getStringMapKeys(mapObj interface{}) []string {
-	argMapKeys := goo.GetType(mapObj).GetGoValue().MapKeys()
+	if mapObj == nil {
+		return nil
+	}
+	mapType := goo.GetType(mapObj)
+	if !mapType.IsMap() {
+		panic("It is not an instance of map")
+	}
+	keyType := mapType.ToMapType().GetKeyType()
+	if keyType.GetName() != "string" {
+		panic("the key type of the given map is not string")
+	}
+	argMapKeys := mapType.GetGoValue().MapKeys()
 	mapKeys := make([]string, len(argMapKeys))
 	for i := 0; i < len(argMapKeys); i++ {
 		mapKeys[i] = argMapKeys[i].String()
