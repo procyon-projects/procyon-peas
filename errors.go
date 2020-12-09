@@ -18,7 +18,7 @@ func (error PeaPreparationError) GetMessage() string {
 }
 
 func (error PeaPreparationError) Error() string {
-	return error.peaName + " : " + error.peaName
+	return error.peaName + " : " + error.message
 }
 
 type PeaInPreparationError struct {

@@ -11,7 +11,6 @@ type ConfigurablePeaFactory interface {
 	AddPeaProcessor(processor PeaProcessor) error
 	GetPeaProcessors() []PeaProcessor
 	GetPeaProcessorsCount() int
-	SetParentPeaFactory(parent PeaFactory)
 	PreInstantiateSharedPeas()
 }
 

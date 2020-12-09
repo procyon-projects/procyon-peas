@@ -13,92 +13,50 @@ type PeaFactory interface {
 	GetPeaByNameAndType(name string, typ goo.Type) (interface{}, error)
 	GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error)
 	GetPeaByType(typ goo.Type) (interface{}, error)
-	ContainsPea(name string) (interface{}, error)
+	ContainsPea(name string) bool
 }
 
 type DefaultPeaFactory struct {
 	SharedPeaRegistry
 	PeaDefinitionRegistry
-	peaProcessors    *PeaProcessors
-	parentPeaFactory PeaFactory
-	readableTypes    map[string]goo.Type
-	muScopes         *sync.RWMutex
+	peaProcessors *PeaProcessors
+	readableTypes map[string]goo.Type
+	muScopes      *sync.RWMutex
 }
 
-func NewDefaultPeaFactory(parentPeaFactory PeaFactory) DefaultPeaFactory {
+func NewDefaultPeaFactory() DefaultPeaFactory {
 	return DefaultPeaFactory{
 		SharedPeaRegistry:     NewDefaultSharedPeaRegistry(),
 		PeaDefinitionRegistry: NewDefaultPeaDefinitionRegistry(),
 		peaProcessors:         NewPeaProcessors(),
-		parentPeaFactory:      parentPeaFactory,
 		readableTypes:         make(map[string]goo.Type, 0),
 		muScopes:              &sync.RWMutex{},
 	}
 }
 
-func (factory DefaultPeaFactory) SetParentPeaFactory(parent PeaFactory) {
-	factory.parentPeaFactory = parent
-}
-
 func (factory DefaultPeaFactory) GetPea(name string) (interface{}, error) {
-	val, err := factory.getPeaWith(name, nil)
-	if err != nil {
-		return val, err
-	}
-	if val == nil && factory.parentPeaFactory != nil {
-		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
-			return parentPeaFactory.getPeaWith(name, nil, nil)
-		}
-	}
-	return val, nil
+	return factory.getPeaWith(name, nil)
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ goo.Type) (interface{}, error) {
-	val, err := factory.getPeaWith(name, typ)
-	if err != nil {
-		return val, err
-	}
-	if val == nil && factory.parentPeaFactory != nil {
-		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
-			return parentPeaFactory.getPeaWith(name, typ, nil)
-		}
-	}
-	return val, nil
+	return factory.getPeaWith(name, typ)
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error) {
-	val, err := factory.getPeaWith(name, nil, args)
-	if err != nil {
-		return val, err
-	}
-	if val == nil && factory.parentPeaFactory != nil {
-		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
-			return parentPeaFactory.getPeaWith(name, nil, args)
-		}
-	}
-	return val, nil
+	return factory.getPeaWith(name, nil, args)
 }
 
 func (factory DefaultPeaFactory) GetPeaByType(typ goo.Type) (interface{}, error) {
-	val, err := factory.getPeaWith("", typ)
-	if err != nil {
-		return val, err
-	}
-	if val == nil && factory.parentPeaFactory != nil {
-		if parentPeaFactory, ok := factory.parentPeaFactory.(DefaultPeaFactory); ok {
-			return parentPeaFactory.getPeaWith("", typ)
-		}
-	}
-	return val, nil
+	return factory.getPeaWith("", typ)
 }
 
-func (factory DefaultPeaFactory) ContainsPea(name string) (interface{}, error) {
-	return nil, nil
+func (factory DefaultPeaFactory) ContainsPea(name string) bool {
+	return factory.ContainsSharedPea(name)
 }
 
 func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...interface{}) (interface{}, error) {
-	if name == "" {
-		return nil, errors.New("pea name must not be null")
+	if name == "" || typ == nil {
+		return nil, errors.New("one of pea name or type must not be nil at least")
 	}
 	sharedPea := factory.GetSharedPea(name)
 	if sharedPea != nil && args == nil {
