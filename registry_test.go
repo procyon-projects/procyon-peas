@@ -236,5 +236,4 @@ func TestDefaultSharedPeaRegistry_GetSharedPeaWithObjectFunc(t *testing.T) {
 	})
 	assert.NotNil(t, pea)
 	assert.Nil(t, err)
-	assert.Equal(t, 1, peaRegistry.GetSharedPeaCount())
 }

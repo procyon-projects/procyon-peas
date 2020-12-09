@@ -54,12 +54,20 @@ func (factory DefaultPeaFactory) ContainsPea(name string) bool {
 	return factory.ContainsSharedPea(name)
 }
 
-type peaCreator struct {
-}
-
 func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, args ...interface{}) (interface{}, error) {
 	if name == "" && requiredType == nil {
 		return nil, errors.New("one of the pea name or type must not be nil at least")
+	}
+
+	if name == "" {
+		candidatePeaNames := factory.GetPeaNamesByType(requiredType)
+		candidatePeaCount := len(candidatePeaNames)
+		if candidatePeaCount > 1 {
+			return nil, errors.New("there is more than one candidate pea definition for the required type, it cannot be distinguished : " + requiredType.GetPackageFullName())
+		} else if candidatePeaCount == 0 {
+			return nil, errors.New("pea definition couldn't be found for the required type : " + requiredType.GetPackageFullName())
+		}
+		name = candidatePeaNames[0]
 	}
 
 	sharedPea := factory.GetSharedPea(name)
@@ -85,21 +93,7 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 		return sharedPea, nil
 	}
 
-	var peaDefinition PeaDefinition
-
-	if name == "" {
-		candidatePeaNames := factory.GetPeaNamesByType(requiredType)
-		candidatePeaCount := len(candidatePeaNames)
-		if candidatePeaCount > 1 {
-			return nil, errors.New("there is more than one candidate pea definition for the required type, it cannot be distinguished : " + requiredType.GetPackageFullName())
-		} else if candidatePeaCount == 0 {
-			return nil, errors.New("pea definition couldn't be found for the required type : " + requiredType.GetPackageFullName())
-		}
-		peaDefinition = factory.GetPeaDefinition(candidatePeaNames[0])
-	} else {
-		peaDefinition = factory.GetPeaDefinition(name)
-	}
-
+	peaDefinition := factory.GetPeaDefinition(name)
 	if peaDefinition == nil {
 		return nil, errors.New("pea definition couldn't be found : " + name)
 	}
