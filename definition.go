@@ -65,7 +65,7 @@ type PeaDefinitionRegistry interface {
 	GetPeaDefinition(peaName string) PeaDefinition
 	GetPeaDefinitionNames() []string
 	GetPeaDefinitionCount() int
-	GetPeaNamesForType(typ goo.Type) []string
+	GetPeaNamesByType(typ goo.Type) []string
 }
 
 type DefaultPeaDefinitionRegistry struct {
@@ -120,7 +120,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaDefinitionCount() int {
 	return len(registry.definitions)
 }
 
-func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesForType(typ goo.Type) []string {
+func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesByType(typ goo.Type) []string {
 	result := make([]string, 0)
 	for peaName, peaDefinition := range registry.definitions {
 		peaType := peaDefinition.GetPeaType()

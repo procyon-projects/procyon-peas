@@ -54,32 +54,89 @@ func (factory DefaultPeaFactory) ContainsPea(name string) bool {
 	return factory.ContainsSharedPea(name)
 }
 
-func (factory DefaultPeaFactory) getPeaWith(name string, typ goo.Type, args ...interface{}) (interface{}, error) {
-	if name == "" || typ == nil {
-		return nil, errors.New("one of pea name or type must not be nil at least")
+type peaCreator struct {
+}
+
+func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, args ...interface{}) (interface{}, error) {
+	if name == "" && requiredType == nil {
+		return nil, errors.New("one of the pea name or type must not be nil at least")
 	}
+
 	sharedPea := factory.GetSharedPea(name)
 	if sharedPea != nil && args == nil {
-		return sharedPea, nil
-	} else {
-		peaDefinition := factory.GetPeaDefinition(name)
-		if SharedScope == peaDefinition.GetScope() {
-			instance, err := factory.GetSharedPeaWithObjectFunc(name, func() (instance interface{}, err error) {
-				defer func() {
-					if r := recover(); r != nil {
-						err = NewPeaPreparationError(name, "Creation of pea is failed")
-					}
-				}()
-				instance, err = factory.createPea(name, peaDefinition, args)
-				return
-			})
-			return instance, err
-		} else if PrototypeScope == peaDefinition.GetScope() {
-			instance, err := factory.createPeaInstance(name, peaDefinition.GetPeaType(), args)
-			return instance, err
+
+		if requiredType != nil {
+			peaDefinition := factory.GetPeaDefinition(name)
+
+			var peaType goo.Type
+			if peaDefinition == nil {
+				peaType = goo.GetType(sharedPea)
+			} else {
+				peaType = peaDefinition.GetPeaType()
+			}
+
+			if factory.matches(peaType, requiredType) {
+				return sharedPea, nil
+			}
+
+			return nil, errors.New("instance's type does not match the required type")
 		}
+
+		return sharedPea, nil
 	}
+
+	var peaDefinition PeaDefinition
+
+	if name == "" {
+		candidatePeaNames := factory.GetPeaNamesByType(requiredType)
+		candidatePeaCount := len(candidatePeaNames)
+		if candidatePeaCount > 1 {
+			return nil, errors.New("there is more than one candidate pea definition for the required type, it cannot be distinguished : " + requiredType.GetPackageFullName())
+		} else if candidatePeaCount == 0 {
+			return nil, errors.New("pea definition couldn't be found for the required type : " + requiredType.GetPackageFullName())
+		}
+		peaDefinition = factory.GetPeaDefinition(candidatePeaNames[0])
+	} else {
+		peaDefinition = factory.GetPeaDefinition(name)
+	}
+
+	if peaDefinition == nil {
+		return nil, errors.New("pea definition couldn't be found : " + name)
+	}
+
+	if requiredType != nil && !factory.matches(peaDefinition.GetPeaType(), requiredType) {
+		return nil, errors.New("pea definition type does not match the required type")
+	}
+
+	if SharedScope == peaDefinition.GetScope() {
+		instance, err := factory.GetSharedPeaWithObjectFunc(name, func() (instance interface{}, err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					err = NewPeaPreparationError(name, "Creation of pea is failed")
+				}
+			}()
+			instance, err = factory.createPea(name, peaDefinition, args)
+			return
+		})
+		return instance, err
+	} else if PrototypeScope == peaDefinition.GetScope() {
+		instance, err := factory.createPeaInstance(name, peaDefinition.GetPeaType(), args)
+		return instance, err
+	}
+
 	return nil, errors.New("instance couldn't be created")
+}
+
+func (factory DefaultPeaFactory) matches(peaType goo.Type, requiredType goo.Type) bool {
+	match := false
+	if peaType.Equals(requiredType) || peaType.GetGoType().ConvertibleTo(requiredType.GetGoType()) {
+		match = true
+	} else if requiredType.IsInterface() && peaType.ToStructType().Implements(requiredType.ToInterfaceType()) {
+		match = true
+	} else if requiredType.IsStruct() && peaType.ToStructType().EmbeddedStruct(requiredType.ToStructType()) {
+		match = true
+	}
+	return match
 }
 
 func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition, args []interface{}) (interface{}, error) {
@@ -147,7 +204,7 @@ func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []int
 	candidateProcessedMap := make(map[string]bool, 0)
 	candidates := make([]interface{}, 0)
 	if parameterType.IsStruct() || parameterType.IsInterface() {
-		names := factory.GetPeaNamesForType(parameterType)
+		names := factory.GetPeaNamesByType(parameterType)
 		for _, name := range names {
 			candidate, err := factory.GetPea(name)
 			if err == nil {

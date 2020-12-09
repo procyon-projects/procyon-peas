@@ -107,23 +107,23 @@ func TestDefaultPeaDefinitionRegistry_GetPeaNamesForType(t *testing.T) {
 	peaDefinition2 := NewSimplePeaDefinition(peaType2)
 	peaDefinitionRegistry.RegisterPeaDefinition("testPea2", peaDefinition2)
 
-	peaNames := peaDefinitionRegistry.GetPeaNamesForType(goo.GetType(testStruct{}))
+	peaNames := peaDefinitionRegistry.GetPeaNamesByType(goo.GetType(testStruct{}))
 	assert.NotNil(t, peaNames)
 	assert.Equal(t, 2, len(peaNames))
 	assert.Contains(t, peaNames, "testPea1")
 	assert.Contains(t, peaNames, "testPea2")
 
-	peaNames = peaDefinitionRegistry.GetPeaNamesForType(goo.GetType(testStruct2{}))
+	peaNames = peaDefinitionRegistry.GetPeaNamesByType(goo.GetType(testStruct2{}))
 	assert.NotNil(t, peaNames)
 	assert.Equal(t, 0, len(peaNames))
 
-	peaNames = peaDefinitionRegistry.GetPeaNamesForType(goo.GetType((*testInterface)(nil)))
+	peaNames = peaDefinitionRegistry.GetPeaNamesByType(goo.GetType((*testInterface)(nil)))
 	assert.NotNil(t, peaNames)
 	assert.Equal(t, 2, len(peaNames))
 	assert.Contains(t, peaNames, "testPea1")
 	assert.Contains(t, peaNames, "testPea2")
 
-	peaNames = peaDefinitionRegistry.GetPeaNamesForType(goo.GetType(baseTestStruct{}))
+	peaNames = peaDefinitionRegistry.GetPeaNamesByType(goo.GetType(baseTestStruct{}))
 	assert.NotNil(t, peaNames)
 	assert.Equal(t, 2, len(peaNames))
 	assert.Contains(t, peaNames, "testPea1")
