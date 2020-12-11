@@ -81,14 +81,6 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 				peaType = goo.GetType(sharedPea)
 			} else {
 				peaType = peaDefinition.GetPeaType()
-				if peaType.IsFunction() {
-					fun := peaType.ToFunctionType()
-					if fun.GetFunctionReturnTypeCount() == 1 {
-						peaType = fun.GetFunctionReturnTypes()[0]
-					} else {
-						return nil, errors.New("pea must have only one return type")
-					}
-				}
 			}
 
 			if factory.matches(peaType, requiredType) {
@@ -139,6 +131,12 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 }
 
 func (factory DefaultPeaFactory) matches(peaType goo.Type, requiredType goo.Type) bool {
+	if peaType.IsFunction() {
+		fun := peaType.ToFunctionType()
+		if fun.GetFunctionReturnTypeCount() == 1 {
+			peaType = fun.GetFunctionReturnTypes()[0]
+		}
+	}
 	match := false
 	if peaType.Equals(requiredType) || peaType.GetGoType().ConvertibleTo(requiredType.GetGoType()) {
 		match = true

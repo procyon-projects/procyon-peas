@@ -62,6 +62,8 @@ func TestPeaProcessors_RemoveProcessor(t *testing.T) {
 
 	peaProcessors.RemoveProcessor(testPeaProcessor)
 	assert.Equal(t, 0, len(peaProcessors.processors))
+
+	peaProcessors.RemoveProcessor(nil)
 }
 
 func TestPeaProcessors_RemoveAllProcessor(t *testing.T) {

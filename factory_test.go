@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func TestDefaultPeaFactory_GetPeaWithEmptyString(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+	_, err := peaFactory.GetPea("")
+	assert.NotNil(t, err)
+}
+
+func TestDefaultPeaFactory_GetPeaByNameAndTypeWithEmptyString(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+	_, err := peaFactory.GetPeaByNameAndType("", nil)
+	assert.NotNil(t, err)
+}
+
 func TestDefaultPeaFactory_GetPeaForExistingSharedPea(t *testing.T) {
 	peaFactory := NewDefaultPeaFactory()
 	testPea := &testStruct{}
@@ -61,6 +73,22 @@ func TestDefaultPeaFactory_GetPeaByNameAndTypeForExistingSharedPea(t *testing.T)
 	pea, err = peaFactory.GetPeaByNameAndType("testPea", embeddedStructType)
 	assert.Nil(t, err)
 	assert.Equal(t, testPea, pea)
+}
+
+func TestDefaultPeaFactory_GetPeaByNameAndTypeForDefinitionWithFunction(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+
+	peaType := goo.GetType(aStruct{})
+	peaDefinition := NewSimplePeaDefinition(goo.GetType(newAStruct))
+	peaFactory.RegisterPeaDefinition("aPea", peaDefinition)
+
+	pea, err := peaFactory.GetPeaByNameAndType("aPea", peaType)
+	assert.Nil(t, err)
+	assert.NotNil(t, pea)
+
+	pea, err = peaFactory.GetPeaByNameAndType("aPea", peaType)
+	assert.Nil(t, err)
+	assert.NotNil(t, pea)
 }
 
 func TestDefaultPeaFactory_GetPeaByNameAndArgs(t *testing.T) {
@@ -140,10 +168,10 @@ func TestDefaultPeaFactory_ContainsPea(t *testing.T) {
 	peaType := goo.GetType(testStruct2{})
 	peaDefinition := NewSimplePeaDefinition(peaType)
 	peaFactory.RegisterPeaDefinition("testPea2", peaDefinition)
-	assert.False(t, peaFactory.ContainsSharedPea("testPea2"))
+	assert.False(t, peaFactory.ContainsPea("testPea2"))
 
 	peaFactory.GetPeaByType(peaType)
-	assert.True(t, peaFactory.ContainsSharedPea("testPea2"))
+	assert.True(t, peaFactory.ContainsPea("testPea2"))
 }
 
 func TestDefaultPeaFactory_PeaProcessors(t *testing.T) {
