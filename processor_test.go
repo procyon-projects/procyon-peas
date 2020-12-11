@@ -3,8 +3,13 @@ package peas
 import (
 	"github.com/codnect/goo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 )
+
+type mockPeaProcessor struct {
+	mock.Mock
+}
 
 type testPeaProcessor struct {
 }
@@ -14,11 +19,11 @@ func newTestPeaProcessor() testPeaProcessor {
 }
 
 func (processor testPeaProcessor) BeforePeaInitialization(peaName string, pea interface{}) (interface{}, error) {
-	return nil, nil
+	return pea, nil
 }
 
 func (processor testPeaProcessor) AfterPeaInitialization(peaName string, pea interface{}) (interface{}, error) {
-	return nil, nil
+	return pea, nil
 }
 
 func TestPeaProcessors_AddPeaProcessor(t *testing.T) {

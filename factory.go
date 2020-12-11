@@ -43,7 +43,7 @@ func (factory DefaultPeaFactory) GetPeaByNameAndType(name string, typ goo.Type) 
 }
 
 func (factory DefaultPeaFactory) GetPeaByNameAndArgs(name string, args ...interface{}) (interface{}, error) {
-	return factory.getPeaWith(name, nil, args)
+	return factory.getPeaWith(name, nil, args...)
 }
 
 func (factory DefaultPeaFactory) GetPeaByType(typ goo.Type) (interface{}, error) {
@@ -81,6 +81,14 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 				peaType = goo.GetType(sharedPea)
 			} else {
 				peaType = peaDefinition.GetPeaType()
+				if peaType.IsFunction() {
+					fun := peaType.ToFunctionType()
+					if fun.GetFunctionReturnTypeCount() == 1 {
+						peaType = fun.GetFunctionReturnTypes()[0]
+					} else {
+						return nil, errors.New("pea must have only one return type")
+					}
+				}
 			}
 
 			if factory.matches(peaType, requiredType) {
@@ -114,7 +122,16 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 		})
 		return instance, err
 	} else if PrototypeScope == peaDefinition.GetScope() {
-		instance, err := factory.createPeaInstance(name, peaDefinition.GetPeaType(), args)
+		peaType := peaDefinition.GetPeaType()
+		if peaType.IsFunction() {
+			fun := peaType.ToFunctionType()
+			if fun.GetFunctionReturnTypeCount() == 1 {
+				peaType = fun.GetFunctionReturnTypes()[0]
+			} else {
+				return nil, errors.New("pea must have only one return type")
+			}
+		}
+		instance, err := factory.createPeaInstance(name, peaType, args)
 		return instance, err
 	}
 
