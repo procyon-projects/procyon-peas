@@ -20,6 +20,10 @@ type testStruct struct {
 	baseTestStruct
 }
 
+func (testStruct) InitializePea() error {
+	return nil
+}
+
 func (testStruct) testMethod() {
 
 }

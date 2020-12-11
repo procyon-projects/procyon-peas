@@ -258,6 +258,31 @@ func TestDefaultPeaFactory_ResolverDependencyForDefaultValues(t *testing.T) {
 
 func TestDefaultPeaFactory_RegisterTypeAsOnlyReadable(t *testing.T) {
 	peaFactory := NewDefaultPeaFactory()
-	peaFactory.RegisterTypeAsOnlyReadable(goo.GetType(testStruct{}))
-	assert.Equal(t, 1, len(peaFactory.readableTypes))
+	peaType1 := goo.GetType(testStruct2{})
+	err := peaFactory.RegisterTypeAsOnlyReadable(peaType1)
+	assert.Nil(t, err)
+
+	peaType2 := goo.GetType((*testInterface)(nil))
+	err = peaFactory.RegisterTypeAsOnlyReadable(peaType2)
+	assert.Nil(t, err)
+
+	assert.Equal(t, 2, len(peaFactory.readableTypes))
+
+	err = peaFactory.RegisterTypeAsOnlyReadable(nil)
+	assert.NotNil(t, err)
+	assert.Equal(t, "type must not be null", err.Error())
+
+	assert.False(t, peaFactory.isOnlyReadableType(nil))
+	assert.True(t, peaFactory.isOnlyReadableType(peaType1))
+	assert.True(t, peaFactory.isOnlyReadableType(goo.GetType(testStruct{})))
+}
+
+func TestDefaultPeaFactory_PreInstantiateSharedPeas(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+
+	peaType := goo.GetType(newCStruct)
+	peaDefinition := NewSimplePeaDefinition(peaType)
+	peaFactory.RegisterPeaDefinition("cPea", peaDefinition)
+
+	peaFactory.PreInstantiateSharedPeas()
 }

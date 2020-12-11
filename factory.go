@@ -2,7 +2,6 @@ package peas
 
 import (
 	"errors"
-	"fmt"
 	"github.com/codnect/goo"
 	"reflect"
 	"sync"
@@ -158,11 +157,6 @@ func (factory DefaultPeaFactory) createPea(name string, definition PeaDefinition
 
 func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, args []interface{}) (result interface{}, error error) {
 	var instance interface{}
-	defer func() {
-		if r := recover(); r != nil {
-			error = errors.New(fmt.Sprintf("while creating an pea object, an error occurred : %s", name))
-		}
-	}()
 	if typ.IsFunction() {
 		constructorFunction := typ.ToFunctionType()
 		parameterCount := constructorFunction.GetFunctionParameterCount()
