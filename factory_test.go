@@ -1,6 +1,7 @@
 package peas
 
 import (
+	"errors"
 	"github.com/codnect/goo"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -178,13 +179,28 @@ func TestDefaultPeaFactory_PeaProcessors(t *testing.T) {
 	peaFactory := NewDefaultPeaFactory()
 
 	peaType := goo.GetType(testStruct{})
-	peaDefinition := NewSimplePeaDefinition(peaType)
+	peaDefinition := NewSimplePeaDefinition(peaType, WithScope(PrototypeScope))
 	peaFactory.RegisterPeaDefinition("testPea", peaDefinition)
-	peaFactory.AddPeaProcessor(newTestPeaProcessor())
+	testPeaProcessor := newTestPeaProcessor()
+	peaFactory.AddPeaProcessor(testPeaProcessor)
 
 	pea, err := peaFactory.GetPea("testPea")
 	assert.Nil(t, err)
 	assert.NotNil(t, pea)
+
+	peaErr := errors.New("pea error")
+	testPeaProcessor.errBeforePeaInitialization = peaErr
+	pea, err = peaFactory.GetPea("testPea")
+	assert.NotNil(t, err)
+	assert.Equal(t, "pea error", err.Error())
+	//assert.Nil(t, pea)
+
+	testPeaProcessor.errBeforePeaInitialization = nil
+	testPeaProcessor.errAfterPeaInitialization = peaErr
+	pea, err = peaFactory.GetPea("testPea")
+	assert.NotNil(t, err)
+	assert.Equal(t, "pea error", err.Error())
+	//assert.Nil(t, pea)
 }
 
 type aStruct struct {
@@ -238,4 +254,10 @@ func TestDefaultPeaFactory_ResolverDependencyForDefaultValues(t *testing.T) {
 	pea, err := peaFactory.GetPea("cPea")
 	assert.Nil(t, err)
 	assert.NotNil(t, pea)
+}
+
+func TestDefaultPeaFactory_RegisterTypeAsOnlyReadable(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+	peaFactory.RegisterTypeAsOnlyReadable(goo.GetType(testStruct{}))
+	assert.Equal(t, 1, len(peaFactory.readableTypes))
 }
