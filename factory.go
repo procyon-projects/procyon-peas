@@ -190,14 +190,23 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 		peas := factory.resolveDependency(parameterType)
 		peaObjectCount := len(peas)
 		if peaObjectCount == 0 {
-			argumentArray[parameterIndex] = factory.getDefaultValue(parameterType)
+			instance := factory.getDefaultValue(parameterType)
+			if instance != nil {
+				instanceType := goo.GetType(instance)
+				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
+					instance = reflect.ValueOf(instance).Elem().Interface()
+				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() {
+					instance = reflect.ValueOf(instance).Elem().Interface()
+				}
+			}
+			argumentArray[parameterIndex] = instance
 		} else if peaObjectCount == 1 {
 			instance := peas[0]
 			if instance != nil {
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
-				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() && parameterType.IsStruct() {
+				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
@@ -235,12 +244,10 @@ func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []int
 func (factory DefaultPeaFactory) getDefaultValue(parameterType goo.Type) interface{} {
 	if parameterType.IsInterface() || parameterType.IsArray() || parameterType.IsSlice() || parameterType.IsMap() {
 		return nil
+	} else if parameterType.IsPointer() {
+		return nil
 	} else if parameterType.IsStruct() {
-		if parameterType.IsPointer() {
-			return nil
-		} else {
-			return parameterType.ToStructType().NewInstance()
-		}
+		return parameterType.ToStructType().NewInstance()
 	} else if parameterType.IsString() {
 		return parameterType.ToStringType().NewInstance()
 	} else if parameterType.IsBoolean() {

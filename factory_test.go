@@ -220,3 +220,22 @@ func TestDefaultPeaFactory_CreatePea_DependencyInjection(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, pea)
 }
+
+type cStruct struct {
+}
+
+func newCStruct(i testInterface, array []string, m map[string]interface{}, aStruct aStruct, s string, b bool, n int) cStruct {
+	return cStruct{}
+}
+
+func TestDefaultPeaFactory_ResolverDependencyForDefaultValues(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+
+	peaType := goo.GetType(newCStruct)
+	peaDefinition := NewSimplePeaDefinition(peaType)
+	peaFactory.RegisterPeaDefinition("cPea", peaDefinition)
+
+	pea, err := peaFactory.GetPea("cPea")
+	assert.Nil(t, err)
+	assert.NotNil(t, pea)
+}
