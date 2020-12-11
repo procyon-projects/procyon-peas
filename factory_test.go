@@ -158,3 +158,37 @@ func TestDefaultPeaFactory_PeaProcessors(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, pea)
 }
+
+type aStruct struct {
+}
+
+func newAStruct() aStruct {
+	return aStruct{}
+}
+
+type bStruct struct {
+}
+
+func newBStruct(a aStruct) bStruct {
+	return bStruct{}
+}
+
+func TestDefaultPeaFactory_CreatePea_DependencyInjection(t *testing.T) {
+	peaFactory := NewDefaultPeaFactory()
+
+	peaType := goo.GetType(newAStruct)
+	peaDefinition := NewSimplePeaDefinition(peaType)
+	peaFactory.RegisterPeaDefinition("aPea", peaDefinition)
+
+	peaType = goo.GetType(newBStruct)
+	peaDefinition = NewSimplePeaDefinition(peaType)
+	peaFactory.RegisterPeaDefinition("bPea", peaDefinition)
+
+	pea, err := peaFactory.GetPea("bPea")
+	assert.Nil(t, err)
+	assert.NotNil(t, pea)
+
+	pea, err = peaFactory.GetPea("aPea")
+	assert.Nil(t, err)
+	assert.NotNil(t, pea)
+}
