@@ -1,7 +1,7 @@
 package peas
 
 import (
-	"github.com/codnect/goo"
+	"github.com/procyon-projects/goo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"

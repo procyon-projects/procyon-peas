@@ -2,7 +2,7 @@ package peas
 
 import (
 	"errors"
-	"github.com/codnect/goo"
+	"github.com/procyon-projects/goo"
 	"sync"
 )
 
