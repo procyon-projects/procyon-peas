@@ -189,7 +189,7 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
-				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() {
+				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() && !parameterType.IsInterface() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
@@ -200,7 +200,7 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
-				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() {
+				} else if instanceType != nil && instanceType.IsPointer() && !parameterType.IsPointer() && !parameterType.IsInterface() {
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
