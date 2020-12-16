@@ -39,15 +39,18 @@ func (registry *DefaultSharedPeaRegistry) RegisterSharedPea(peaName string, shar
 	if peaName == "" || sharedObject == nil {
 		return errors.New("pea name or shared object must not be null or empty")
 	}
+
 	sharedObjectType := goo.GetType(sharedObject)
 	if !sharedObjectType.IsInterface() && !sharedObjectType.IsStruct() {
 		return errors.New("pea object must be only instance of struct")
 	}
+
 	registry.muSharedObjects.Lock()
 	if _, ok := registry.sharedObjects[peaName]; ok {
 		registry.muSharedObjects.Unlock()
 		return errors.New("could not register shared object with same name")
 	}
+
 	registry.sharedObjects[peaName] = sharedObject
 	registry.muSharedObjects.Unlock()
 	registry.addInstanceSharedObjectsType(peaName, sharedObjectType)
@@ -109,16 +112,16 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeasByType(requiredType goo.T
 	if requiredType == nil {
 		panic("Required type must not be nil")
 	}
+
 	defer func() {
-		if r := recover(); r != nil {
-			registry.muSharedObjects.Unlock()
-		}
+		registry.muSharedObjects.Unlock()
 	}()
+
 	instances := make([]interface{}, 0)
 	registry.muSharedObjects.Lock()
 	for peaName, peaType := range registry.sharedObjectsType {
 		match := false
-		if peaType.Equals(requiredType) || peaType.GetGoType().ConvertibleTo(requiredType.GetGoType()) {
+		if peaType.Equals(requiredType) {
 			match = true
 		} else if requiredType.IsInterface() && peaType.ToStructType().Implements(requiredType.ToInterfaceType()) {
 			match = true
@@ -129,7 +132,6 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeasByType(requiredType goo.T
 			instances = append(instances, registry.sharedObjects[peaName])
 		}
 	}
-	registry.muSharedObjects.Unlock()
 	return instances
 }
 
@@ -138,14 +140,14 @@ func (registry *DefaultSharedPeaRegistry) GetSharedPeaWithObjectFunc(peaName str
 	if sharedPea != nil {
 		return sharedPea, nil
 	}
+
 	err := registry.addSharedPeaToPreparation(peaName)
 	if err != nil {
 		return nil, err
 	}
+
 	defer func() {
-		if r := recover(); r != nil {
-			registry.removedSharedPeaFromPreparation(peaName)
-		}
+		registry.removedSharedPeaFromPreparation(peaName)
 	}()
 	var newSharedObj interface{}
 	newSharedObj, err = objFunc()

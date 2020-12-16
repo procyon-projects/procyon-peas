@@ -8,6 +8,7 @@ type ConfigurablePeaFactory interface {
 	SharedPeaRegistry
 	PeaFactory
 	RegisterTypeAsOnlyReadable(typ goo.Type) error
+	ExcludeType(typ goo.Type) error
 	AddPeaProcessor(processor PeaProcessor) error
 	GetPeaProcessors() []PeaProcessor
 	GetPeaProcessorsCount() int

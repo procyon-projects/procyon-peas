@@ -20,6 +20,7 @@ type DefaultPeaFactory struct {
 	PeaDefinitionRegistry
 	peaProcessors *PeaProcessors
 	readableTypes map[string]goo.Type
+	excludedTypes map[string]goo.Type
 	muScopes      *sync.RWMutex
 }
 
@@ -29,6 +30,7 @@ func NewDefaultPeaFactory() DefaultPeaFactory {
 		PeaDefinitionRegistry: NewDefaultPeaDefinitionRegistry(),
 		peaProcessors:         NewPeaProcessors(),
 		readableTypes:         make(map[string]goo.Type, 0),
+		excludedTypes:         make(map[string]goo.Type, 0),
 		muScopes:              &sync.RWMutex{},
 	}
 }
@@ -103,25 +105,24 @@ func (factory DefaultPeaFactory) getPeaWith(name string, requiredType goo.Type, 
 
 	if SharedScope == peaDefinition.GetScope() {
 		instance, err := factory.GetSharedPeaWithObjectFunc(name, func() (instance interface{}, err error) {
-			defer func() {
-				if r := recover(); r != nil {
-					err = NewPeaPreparationError(name, "Creation of pea is failed")
-				}
-			}()
 			instance, err = factory.createPea(name, peaDefinition, args)
 			return
 		})
 		return instance, err
 	} else if PrototypeScope == peaDefinition.GetScope() {
 		peaType := peaDefinition.GetPeaType()
+
 		if peaType.IsFunction() {
+
 			fun := peaType.ToFunctionType()
 			if fun.GetFunctionReturnTypeCount() == 1 {
 				peaType = fun.GetFunctionReturnTypes()[0]
 			} else {
 				return nil, errors.New("pea must have only one return type")
 			}
+
 		}
+
 		instance, err := factory.createPeaInstance(name, peaType, args)
 		return instance, err
 	}
@@ -160,6 +161,7 @@ func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, ar
 	if typ.IsFunction() {
 		constructorFunction := typ.ToFunctionType()
 		parameterCount := constructorFunction.GetFunctionParameterCount()
+
 		if parameterCount != 0 && args == nil {
 			parameterTypes := constructorFunction.GetFunctionParameterTypes()
 			resolvedArguments := factory.createArgumentArray(name, parameterTypes)
@@ -169,12 +171,15 @@ func (factory DefaultPeaFactory) createPeaInstance(name string, typ goo.Type, ar
 		} else {
 			error = errors.New("argument count does not match with the parameter count which constructor function has go")
 		}
+
 	} else {
 		instance, error = CreateInstance(typ, nil)
 	}
+
 	if error != nil {
 		return
 	}
+
 	return factory.initializePea(name, instance)
 }
 
@@ -183,8 +188,10 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 	for parameterIndex, parameterType := range parameterTypes {
 		peas := factory.resolveDependency(parameterType)
 		peaObjectCount := len(peas)
+
 		if peaObjectCount == 0 {
 			instance := factory.getDefaultValue(parameterType)
+
 			if instance != nil {
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
@@ -193,9 +200,11 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
+
 			argumentArray[parameterIndex] = instance
 		} else if peaObjectCount == 1 {
 			instance := peas[0]
+
 			if instance != nil {
 				instanceType := goo.GetType(instance)
 				if factory.isOnlyReadableType(instanceType) && instanceType.IsPointer() {
@@ -204,27 +213,35 @@ func (factory DefaultPeaFactory) createArgumentArray(name string, parameterTypes
 					instance = reflect.ValueOf(instance).Elem().Interface()
 				}
 			}
+
 			argumentArray[parameterIndex] = instance
 		} else {
 			panic("Determining which dependency is used cannot be distinguished : " + name)
 		}
+
 	}
+
 	return argumentArray
 }
 
 func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []interface{} {
 	candidateProcessedMap := make(map[string]bool, 0)
 	candidates := make([]interface{}, 0)
+
 	if parameterType.IsStruct() || parameterType.IsInterface() {
 		names := factory.GetPeaNamesByType(parameterType)
+
 		for _, name := range names {
 			candidate, err := factory.GetPea(name)
+
 			if err == nil {
 				candidates = append(candidates, candidate)
 				candidateProcessedMap[goo.GetType(candidate).GetFullName()] = true
 			}
 		}
+
 	}
+
 	typeCandidates := factory.GetSharedPeasByType(parameterType)
 	for _, typeCandidate := range typeCandidates {
 		if _, ok := candidateProcessedMap[goo.GetType(typeCandidate).GetFullName()]; ok {
@@ -232,6 +249,7 @@ func (factory DefaultPeaFactory) resolveDependency(parameterType goo.Type) []int
 		}
 		candidates = append(candidates, typeCandidate)
 	}
+
 	return candidates
 }
 
@@ -261,10 +279,12 @@ func (factory DefaultPeaFactory) initializePea(name string, obj interface{}) (in
 	if err != nil {
 		return result, err
 	}
+
 	err = factory.invokePeaInitializers(name, result)
 	if err != nil {
 		return result, err
 	}
+
 	result, err = factory.applyPeaProcessorsAfterInitialization(name, obj)
 	if err != nil {
 		return result, err
@@ -275,6 +295,7 @@ func (factory DefaultPeaFactory) initializePea(name string, obj interface{}) (in
 func (factory DefaultPeaFactory) applyPeaProcessorsBeforeInitialization(name string, obj interface{}) (interface{}, error) {
 	result := obj
 	var err error
+
 	if factory.GetPeaProcessorsCount() > 0 {
 		for _, processor := range factory.GetPeaProcessors() {
 			result, err = processor.BeforePeaInitialization(name, result)
@@ -307,10 +328,22 @@ func (factory DefaultPeaFactory) applyPeaProcessorsAfterInitialization(name stri
 	return result, nil
 }
 
+func (factory DefaultPeaFactory) ExcludeType(typ goo.Type) error {
+	if typ == nil {
+		return errors.New("type must not be null")
+	}
+
+	factory.muScopes.Lock()
+	factory.excludedTypes[typ.GetFullName()] = typ
+	factory.muScopes.Unlock()
+	return nil
+}
+
 func (factory DefaultPeaFactory) RegisterTypeAsOnlyReadable(typ goo.Type) error {
 	if typ == nil {
 		return errors.New("type must not be null")
 	}
+
 	factory.muScopes.Lock()
 	factory.readableTypes[typ.GetFullName()] = typ
 	factory.muScopes.Unlock()
@@ -353,6 +386,27 @@ func (factory DefaultPeaFactory) GetPeaProcessorsCount() int {
 func (factory DefaultPeaFactory) PreInstantiateSharedPeas() {
 	peaNames := factory.GetPeaDefinitionNames()
 	for _, peaName := range peaNames {
+		peaDefinition := factory.GetPeaDefinition(peaName)
+		if peaDefinition != nil && factory.isExcludedType(peaDefinition.GetPeaType()) {
+			continue
+		}
 		factory.GetPea(peaName)
 	}
+}
+
+func (factory DefaultPeaFactory) isExcludedType(typ goo.Type) bool {
+	peaType := typ
+	if peaType.IsFunction() {
+		peaType = peaType.ToFunctionType().GetFunctionReturnTypes()[0]
+	}
+
+	for _, excludedType := range factory.excludedTypes {
+		if excludedType.IsStruct() && peaType.IsStruct() && excludedType.Equals(peaType) {
+			return true
+		} else if excludedType.IsInterface() && peaType.IsStruct() && peaType.ToStructType().Implements(excludedType.ToInterfaceType()) {
+			return true
+		}
+	}
+
+	return false
 }

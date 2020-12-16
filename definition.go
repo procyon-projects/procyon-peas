@@ -22,9 +22,11 @@ func NewSimplePeaDefinition(typ goo.Type, options ...SimplePeaDefinitionOption) 
 	def := &SimplePeaDefinition{
 		typ: typ,
 	}
+
 	for _, option := range options {
 		option(def)
 	}
+
 	if def.scope == "" {
 		def.scope = SharedScope
 	}
@@ -35,12 +37,14 @@ func (def *SimplePeaDefinition) GetTypeName() string {
 	if def.typ == nil {
 		return ""
 	}
+
 	if def.typ.IsFunction() {
 		fun := def.typ.ToFunctionType()
 		if fun.GetFunctionReturnTypeCount() == 1 {
 			return fun.GetFunctionReturnTypes()[0].GetFullName()
 		}
 	}
+
 	return def.typ.String()
 }
 
@@ -124,6 +128,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesByType(typ goo.Type) []
 	result := make([]string, 0)
 	for peaName, peaDefinition := range registry.definitions {
 		peaType := peaDefinition.GetPeaType()
+
 		if peaType.IsFunction() {
 			fun := peaType.ToFunctionType()
 			if fun.GetFunctionReturnTypeCount() == 1 {
@@ -133,6 +138,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesByType(typ goo.Type) []
 			}
 		}
 		match := false
+
 		if typ.IsInterface() && peaType.IsStruct() && peaType.ToStructType().Implements(typ.ToInterfaceType()) {
 			match = true
 		} else if typ.IsStruct() && peaType.IsStruct() {
@@ -144,6 +150,7 @@ func (registry *DefaultPeaDefinitionRegistry) GetPeaNamesByType(typ goo.Type) []
 				match = true
 			}
 		}
+
 		if match {
 			result = append(result, peaName)
 		}
